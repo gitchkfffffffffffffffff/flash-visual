@@ -1,0 +1,30 @@
+{
+	"schemaVersion": 1,
+	"id": "flash-visual",
+	"version": "${version}",
+	"name": "Flash Visual",
+	"description": "Flash Visual: dupe GUI, Music HUD, Target HUD, FreeCam, ESP, ghost blocks",
+	"authors": [
+		"You"
+	],
+	"license": "CC0-1.0",
+	"icon": "assets/template-mod/icon.png",
+	"environment": "*",
+	"mixins": [
+		"flash-visual.mixins.json"
+	],
+	"entrypoints": {
+		"main": [
+			"com.example.TemplateMod"
+		],
+		"client": [
+			"com.example.client.DupeModClient"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.19.3",
+		"minecraft": "~1.21.11",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}

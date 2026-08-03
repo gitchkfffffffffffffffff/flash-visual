@@ -1,0 +1,21 @@
+{
+	"required": true,
+	"minVersion": "0.8",
+	"package": "com.example.client.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"client": [
+		"FogRendererMixin",
+		"SoundEngineMixin",
+		"DarknessFogEnvironmentMixin",
+		"EntityRenderDispatcherMixin",
+		"LivingEntityRendererMixin",
+		"ScreenMixin",
+		"AltManagerMixin",
+		"LevelMixin",
+		"TitleScreenMixin",
+		"ItemInHandRendererMixin"
+	],
+	"injectors": {
+		"defaultRequire": 0
+	}
+}

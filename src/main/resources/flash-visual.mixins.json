@@ -13,7 +13,8 @@
 		"AltManagerMixin",
 		"LevelMixin",
 		"TitleScreenMixin",
-		"ItemInHandRendererMixin"
+		"ItemInHandRendererMixin",
+		"PlayerSkinMixin"
 	],
 	"injectors": {
 		"defaultRequire": 0

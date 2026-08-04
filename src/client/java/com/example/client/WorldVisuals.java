@@ -23,6 +23,12 @@ public class WorldVisuals {
     public static boolean pumping = false;
     public static volatile long cumStartMs = -1;
     public static volatile UUID fuckTargetUuid = null;
+    public static volatile boolean blowjob = false;
+    public static volatile long actStartMs = -1;
+    public static volatile boolean autoCumDone = false;
+    private static final int HEAD_COLOR = 0xFFE8C9A0;
+    private static final int GIVER_COLOR = 0xFF9FE0B0;
+    private static final int GIVER_GLANS = 0xFF86C896;
 
     public static float hatScale = 1.0f;
     public static float circleRadius = 3.0f;
@@ -160,6 +166,10 @@ public class WorldVisuals {
     private static void renderPenis(GuiGraphics gui, Minecraft client, Entity e, Vec3 feet,
                                     Vec3 camPos, Vector3fc fwd, int w, int h) {
         boolean isTarget = fuckTargetUuid != null && e.getUUID().equals(fuckTargetUuid);
+        if (blowjob && isTarget && client.player != null) {
+            renderBlowjob(gui, client, e, feet, camPos, fwd, w, h);
+            return;
+        }
         boolean pumpMe = pumping && (fuckTargetUuid == null || isTarget);
 
         float yaw = e.getYRot();
@@ -217,6 +227,76 @@ public class WorldVisuals {
                 if (isTarget) {
                     fuckTargetUuid = null;
                 }
+            }
+        }
+    }
+
+    private static void renderBlowjob(GuiGraphics gui, Minecraft client, Entity e, Vec3 feet,
+                                      Vec3 camPos, Vector3fc fwd, int w, int h) {
+        double toX = client.player.getX() - feet.x;
+        double toZ = client.player.getZ() - feet.z;
+        double len = Math.hypot(toX, toZ);
+        double dx = len > 0.001 ? toX / len : -Math.sin(Math.toRadians(e.getYRot()));
+        double dz = len > 0.001 ? toZ / len : Math.cos(Math.toRadians(e.getYRot()));
+
+        long now = System.currentTimeMillis();
+        long elapsed = actStartMs > 0 ? now - actStartMs : now;
+
+        if (actStartMs > 0 && !autoCumDone && elapsed >= 10000) {
+            autoCumDone = true;
+            cumStartMs = now;
+        }
+
+        boolean anal = elapsed >= 10000;
+        double ph = (now % 700) / 700.0 * Math.PI * 2;
+        double headFrac = (Math.sin(ph) + 1.0) / 2.0;
+
+        double hyBase = feet.y + 0.85;
+        Vec3 base = new Vec3(feet.x + dx * 0.1, hyBase, feet.z + dz * 0.1);
+        Vec3 tip = new Vec3(feet.x + dx * 0.1, hyBase + 0.55, feet.z + dz * 0.1);
+        Vec3 head = new Vec3(feet.x + dx * 0.1, hyBase + 0.12 + headFrac * 0.43, feet.z + dz * 0.1);
+        Vec3 ballL = new Vec3(feet.x - dz * 0.05, feet.y + 0.24, feet.z + dx * 0.05);
+        Vec3 ballR = new Vec3(feet.x + dz * 0.05, feet.y + 0.24, feet.z - dx * 0.05);
+
+        double[] b = project(gui, client, base, camPos, fwd, w, h);
+        double[] t = project(gui, client, tip, camPos, fwd, w, h);
+        double[] hd = project(gui, client, head, camPos, fwd, w, h);
+        double[] bl = project(gui, client, ballL, camPos, fwd, w, h);
+        double[] br = project(gui, client, ballR, camPos, fwd, w, h);
+        if (b == null || t == null || hd == null || bl == null || br == null) {
+            return;
+        }
+
+        double dist = Math.max(1.0, feet.distanceTo(camPos));
+        double rScale = Math.max(1.5, Math.min(6.0, 9.0 / dist));
+
+        line(gui, b[0], b[1], t[0], t[1], 3.0f, PENIS_COLOR);
+        fillCircle(gui, t[0], t[1], rScale * 0.8, GLANS_COLOR);
+        fillCircle(gui, hd[0], hd[1], rScale * 1.1, HEAD_COLOR);
+        fillCircle(gui, bl[0], bl[1], rScale * 0.6, BALL_COLOR);
+        fillCircle(gui, br[0], br[1], rScale * 0.6, BALL_COLOR);
+
+        if (anal) {
+            double ogdx = -dx;
+            double ogdz = -dz;
+            double thrustPh = Math.sin((now % 500) / 500.0 * Math.PI * 2);
+            double thrust = 0.28 + Math.max(0.0, thrustPh) * 0.14;
+            Vec3 aBase = new Vec3(feet.x + ogdx * 0.36, feet.y + 0.9, feet.z + ogdz * 0.36);
+            Vec3 aTip = new Vec3(feet.x + ogdx * (0.36 - thrust), feet.y + 1.02, feet.z + ogdz * (0.36 - thrust));
+            double[] ab = project(gui, client, aBase, camPos, fwd, w, h);
+            double[] at = project(gui, client, aTip, camPos, fwd, w, h);
+            if (ab != null && at != null) {
+                line(gui, ab[0], ab[1], at[0], at[1], 3.0f, GIVER_COLOR);
+                fillCircle(gui, at[0], at[1], rScale * 0.7, GIVER_GLANS);
+            }
+        }
+
+        if (cumStartMs > 0) {
+            long cElapsed = now - cumStartMs;
+            if (cElapsed < 800) {
+                renderCum(gui, t, cElapsed, rScale);
+            } else {
+                cumStartMs = -1;
             }
         }
     }

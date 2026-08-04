@@ -39,7 +39,7 @@ public class DupeModClient implements ClientModInitializer {
     private static boolean wasF9Down = false;
     private static boolean wasF10Down = false;
     private static boolean wasF11Down = false;
-    private static boolean wasF4Down = false;
+    private static boolean wasPDown = false;    private static boolean wasF4Down = false;
     private static boolean wasF5Down = false;
     private static boolean wasF12Down = false;
     private static boolean wasKDown = false;
@@ -180,6 +180,12 @@ public class DupeModClient implements ClientModInitializer {
                 WinMusicReader.next();
             }
             wasF12Down = isF12Down;
+
+            boolean isPDown = GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_P) == GLFW.GLFW_PRESS;
+            if (inGame && isPDown && !wasPDown) {
+                togglePump(client);
+            }
+            wasPDown = isPDown;
 
             boolean isKDown = GLFW.glfwGetKey(handle, Binds.get(Binds.KILLAURA)) == GLFW.GLFW_PRESS;
             if (inGame && isKDown && !wasKDown) {
@@ -338,6 +344,18 @@ public class DupeModClient implements ClientModInitializer {
     private static void message(Minecraft client, String text) {
         if (client.player != null) {
             client.player.displayClientMessage(Component.literal(text), false);
+        }
+    }
+
+    private static void togglePump(Minecraft client) {
+        if (WorldVisuals.pumping) {
+            WorldVisuals.pumping = false;
+            WorldVisuals.cumStartMs = System.currentTimeMillis();
+            message(client, "Кончил 🤍");
+        } else {
+            WorldVisuals.pumping = true;
+            WorldVisuals.cumStartMs = -1;
+            message(client, "Подрочи...");
         }
     }
 

@@ -18,6 +18,8 @@ public class WorldVisuals {
     public static boolean tracersMobs = false;
     public static boolean nameTag = false;
     public static boolean penis = false;
+    public static boolean pumping = false;
+    public static volatile long cumStartMs = -1;
 
     public static float hatScale = 1.0f;
     public static float circleRadius = 3.0f;
@@ -160,10 +162,20 @@ public class WorldVisuals {
         double px = -dz;
         double pz = dx;
 
-        Vec3 base = new Vec3(feet.x + dx * 0.12, feet.y + 0.32, feet.z + dz * 0.12);
-        Vec3 tip = new Vec3(feet.x + dx * 0.52, feet.y + 0.36, feet.z + dz * 0.52);
-        Vec3 ballL = new Vec3(feet.x + px * 0.07 - dx * 0.06, feet.y + 0.24, feet.z + pz * 0.07 - dz * 0.06);
-        Vec3 ballR = new Vec3(feet.x - px * 0.07 - dx * 0.06, feet.y + 0.24, feet.z - pz * 0.07 - dz * 0.06);
+        long now = System.currentTimeMillis();
+        double stroke = 0;
+        double forward = 0.40;
+        if (pumping) {
+            double ph = (now % 2000) / 1000.0 * Math.PI;
+            stroke = Math.sin(ph) * 0.14;
+            forward = 0.40 + Math.abs(Math.sin(ph)) * 0.12;
+        }
+
+        double hy = feet.y + 0.32 + stroke * 0.5;
+        Vec3 base = new Vec3(feet.x + dx * 0.12, hy, feet.z + dz * 0.12);
+        Vec3 tip = new Vec3(feet.x + dx * (0.12 + forward), hy + 0.04, feet.z + dz * (0.12 + forward));
+        Vec3 ballL = new Vec3(feet.x + px * 0.07 - dx * 0.06, feet.y + 0.24 + stroke * 0.3, feet.z + pz * 0.07 - dz * 0.06);
+        Vec3 ballR = new Vec3(feet.x - px * 0.07 - dx * 0.06, feet.y + 0.24 + stroke * 0.3, feet.z - pz * 0.07 - dz * 0.06);
 
         double[] b = project(gui, client, base, camPos, fwd, w, h);
         double[] t = project(gui, client, tip, camPos, fwd, w, h);
@@ -180,6 +192,27 @@ public class WorldVisuals {
         fillCircle(gui, t[0], t[1], rScale * 0.8, GLANS_COLOR);
         fillCircle(gui, bl[0], bl[1], rScale * 0.6, BALL_COLOR);
         fillCircle(gui, br[0], br[1], rScale * 0.6, BALL_COLOR);
+
+        if (cumStartMs > 0) {
+            long elapsed = now - cumStartMs;
+            if (elapsed < 800) {
+                renderCum(gui, t, elapsed, rScale);
+            } else {
+                cumStartMs = -1;
+            }
+        }
+    }
+
+    private static void renderCum(GuiGraphics gui, double[] tip, long elapsedMs, double rScale) {
+        double p = Math.min(1.0, elapsedMs / 800.0);
+        int n = 22;
+        for (int i = 0; i < n; i++) {
+            double a = (i / (double) n) * Math.PI;
+            double spd = 0.35 + (i % 6) * 0.10;
+            double x = tip[0] + Math.cos(a) * spd * p * 110.0 * rScale;
+            double y = tip[1] - Math.abs(Math.sin(a)) * spd * p * 90.0 * rScale + p * p * 16.0;
+            fillCircle(gui, x, y, 1.5 * rScale, 0xFFFAFAFA);
+        }
     }
 
     private static void fillCircle(GuiGraphics gui, double cx, double cy, double r, int color) {

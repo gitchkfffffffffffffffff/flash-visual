@@ -127,23 +127,10 @@ public class ItemGiveScreen extends Screen {
         stack.setCount(parseCount());
         if (client.isSingleplayer() || DupeModClient.serverHasMod) {
             ClientPlayNetworking.send(new DupeGivePayload(stack, null));
-        } else if (client.getConnection() != null) {
-            client.getConnection().sendCommand(buildGiveCommand(stack));
         } else {
             spawnStack(player.level(), player.getX(), player.getY() + 0.5, player.getZ(), stack);
         }
         player.displayClientMessage(Component.literal("Выдано: " + stack.getHoverName().getString() + " x" + stack.getCount()), false);
-    }
-
-    private static String buildGiveCommand(ItemStack stack) {
-        StringBuilder sb = new StringBuilder("give @p ")
-            .append(BuiltInRegistries.ITEM.getKey(stack.getItem()))
-            .append(' ').append(stack.getCount());
-        CompoundTag tag = tagOf(stack);
-        if (tag != null) {
-            sb.append(" {\"minecraft:custom_data\":").append(tag).append('}');
-        }
-        return sb.toString();
     }
 
     private void applyNbt() {

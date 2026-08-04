@@ -1,12 +1,9 @@
 package com.example.client;
 
-import com.example.DupeGivePayload;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.decoration.ArmorStand;
@@ -150,13 +147,7 @@ public class DupeChestScreen extends Screen {
             player.displayClientMessage(Component.literal("Армор стенд телепортирован к тебе и отдал предмет"), false);
         } else {
             ItemStack stack = items.get(selectedIndex).copy();
-            if (client.isSingleplayer() || DupeModClient.serverHasMod) {
-                ClientPlayNetworking.send(new DupeGivePayload(stack, null));
-            } else if (client.getConnection() != null) {
-                client.getConnection().sendCommand("give @p " + BuiltInRegistries.ITEM.getKey(stack.getItem()) + " " + stack.getCount());
-            } else {
-                spawnStack(player.level(), player.getX(), player.getY(), player.getZ(), stack);
-            }
+            spawnStack(player.level(), player.getX(), player.getY(), player.getZ(), stack);
             player.displayClientMessage(Component.literal("Выдано: " + stack.getHoverName().getString() + " x" + stack.getCount()), false);
         }
     }

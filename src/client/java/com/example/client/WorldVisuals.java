@@ -22,6 +22,8 @@ public class WorldVisuals {
     public static boolean zhiguli = false;
     public static boolean zhiguliView = false;
     public static boolean majorSuit = false;
+    public static boolean skinOverride = true;
+    public static String skinTargetName = "iamknow";
 
     public static float hatScale = 1.0f;
     public static float circleRadius = 3.0f;

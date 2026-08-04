@@ -42,9 +42,9 @@ public class DupeModClient implements ClientModInitializer {
     private static boolean wasF9Down = false;
     private static boolean wasF10Down = false;
     private static boolean wasF11Down = false;
-    private static boolean wasPDown = false;
-    private static boolean wasLDown = false;
-    private static boolean wasSemicolonDown = false;    private static boolean wasF4Down = false;
+    private static boolean wasF4Down = false;
+    private static boolean wasGraveDown = false;
+    private static boolean wasAttackDown = false;
     private static boolean wasF5Down = false;
     private static boolean wasF12Down = false;
     private static boolean wasKDown = false;
@@ -53,9 +53,6 @@ public class DupeModClient implements ClientModInitializer {
     private static boolean wasXDown = false;
     private static boolean wasVDown = false;
     private static boolean ghostBlockActive = false;
-    private static long lastThrustSound = 0;
-    private static long lastMoanSound = 0;
-    private static long lastCumSound = -1;
     private static BlockPos lastGhostBlockPos = null;
     private static boolean pendingChestOpen = false;
     private static int pendingChestTicks = 0;
@@ -124,6 +121,7 @@ public class DupeModClient implements ClientModInitializer {
             HudRenderer.tick(client);
             HudRenderer.updateInteraction(client);
             FreeCam.tick(client);
+            ZhiguliCam.tick(client);
             EspRenderer.tick(client);
             KillAura.tick(client);
             Scaffold.tick(client);
@@ -190,23 +188,21 @@ public class DupeModClient implements ClientModInitializer {
             }
             wasF12Down = isF12Down;
 
-            boolean isPDown = GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_P) == GLFW.GLFW_PRESS;
-            if (inGame && isPDown && !wasPDown) {
-                togglePump(client);
+            boolean isGraveDown = GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_GRAVE_ACCENT) == GLFW.GLFW_PRESS;
+            if (inGame && isGraveDown && !wasGraveDown) {
+                if (client.player != null) {
+                    client.player.playSound(SoundEvents.SLIME_SQUISH, 1.0f, 0.8f + (float) Math.random() * 0.4f);
+                }
             }
-            wasPDown = isPDown;
+            wasGraveDown = isGraveDown;
 
-            boolean isLDown = GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_L) == GLFW.GLFW_PRESS;
-            if (inGame && isLDown && !wasLDown) {
-                targetPump(client, false);
+            boolean isAttackDown = GLFW.glfwGetMouseButton(handle, 0) == GLFW.GLFW_PRESS;
+            if (inGame && isAttackDown && !wasAttackDown && client.hitResult instanceof EntityHitResult) {
+                if (client.player != null) {
+                    client.player.playSound(SoundEvents.SLIME_SQUISH, 1.0f, 0.9f + (float) Math.random() * 0.3f);
+                }
             }
-            wasLDown = isLDown;
-
-            boolean isSemicolonDown = GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_SEMICOLON) == GLFW.GLFW_PRESS;
-            if (inGame && isSemicolonDown && !wasSemicolonDown) {
-                targetPump(client, true);
-            }
-            wasSemicolonDown = isSemicolonDown;
+            wasAttackDown = isAttackDown;
 
             boolean isKDown = GLFW.glfwGetKey(handle, Binds.get(Binds.KILLAURA)) == GLFW.GLFW_PRESS;
             if (inGame && isKDown && !wasKDown) {
@@ -264,22 +260,6 @@ public class DupeModClient implements ClientModInitializer {
                 }
             }
 
-            if (client.player != null && (WorldVisuals.pumping || WorldVisuals.blowjob)) {
-                long now = System.currentTimeMillis();
-                if (WorldVisuals.cumStartMs < 0 && now - lastThrustSound > 260) {
-                    lastThrustSound = now;
-                    client.player.playSound(SoundEvents.SLIME_SQUISH, 0.6f, 0.9f + (float) Math.random() * 0.3f);
-                }
-                if (now - lastMoanSound > 1800 && Math.random() < 0.5) {
-                    lastMoanSound = now;
-                    client.player.playSound(SoundEvents.VILLAGER_AMBIENT, 0.4f, 1.1f + (float) Math.random() * 0.3f);
-                }
-            }
-            if (client.player != null && WorldVisuals.cumStartMs > 0 && WorldVisuals.cumStartMs != lastCumSound) {
-                lastCumSound = WorldVisuals.cumStartMs;
-                client.player.playSound(SoundEvents.GENERIC_SPLASH, 0.9f, 0.9f);
-                client.player.playSound(SoundEvents.PLAYER_BURP, 1.0f, 0.8f);
-            }
         });
     }
 
@@ -383,62 +363,6 @@ public class DupeModClient implements ClientModInitializer {
         if (client.player != null) {
             client.player.displayClientMessage(Component.literal(text), false);
         }
-    }
-
-    private static void togglePump(Minecraft client) {
-        if (WorldVisuals.pumping) {
-            WorldVisuals.pumping = false;
-            WorldVisuals.cumStartMs = System.currentTimeMillis();
-            message(client, "Кончил 🤍");
-        } else {
-            WorldVisuals.pumping = true;
-            WorldVisuals.cumStartMs = -1;
-            message(client, "Подрочи...");
-        }
-    }
-
-    private static void targetPump(Minecraft client, boolean blowjobMode) {
-        if (client.player == null || client.level == null) {
-            return;
-        }
-        if (WorldVisuals.pumping && WorldVisuals.fuckTargetUuid != null && WorldVisuals.blowjob == blowjobMode) {
-            WorldVisuals.fuckTargetUuid = null;
-            WorldVisuals.pumping = false;
-            WorldVisuals.blowjob = false;
-            WorldVisuals.cumStartMs = -1;
-            message(client, "Отпустил");
-            return;
-        }
-        net.minecraft.world.phys.Vec3 eye = client.player.getEyePosition();
-        net.minecraft.world.phys.Vec3 look = client.player.getLookAngle();
-        double bestDot = 0.5;
-        net.minecraft.world.entity.Entity best = null;
-        for (net.minecraft.world.entity.Entity e : client.level.entitiesForRendering()) {
-            if (e == client.player || !(e instanceof net.minecraft.world.entity.player.Player)) {
-                continue;
-            }
-            net.minecraft.world.phys.Vec3 center = e.getBoundingBox().getCenter();
-            double dist = eye.distanceTo(center);
-            if (dist > 16.0) {
-                continue;
-            }
-            double dot = center.subtract(eye).normalize().dot(look);
-            if (dot > bestDot) {
-                bestDot = dot;
-                best = e;
-            }
-        }
-        if (best == null) {
-            message(client, "Никого нет перед камерой");
-            return;
-        }
-        WorldVisuals.fuckTargetUuid = best.getUUID();
-        WorldVisuals.pumping = true;
-        WorldVisuals.blowjob = blowjobMode;
-        WorldVisuals.cumStartMs = -1;
-        WorldVisuals.autoCumDone = false;
-        WorldVisuals.actStartMs = System.currentTimeMillis();
-        message(client, blowjobMode ? "Минет " + best.getName().getString() : "Трахнул " + best.getName().getString());
     }
 
     public static void tpTo(Minecraft client, double x, double y, double z) {

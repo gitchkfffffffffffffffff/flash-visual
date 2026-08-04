@@ -82,6 +82,8 @@ public class DupeGuiScreen extends Screen {
         y += 32;
         addAction(x2, y, w2, "Выдача предметов", () -> client.setScreen(new ItemGiveScreen()));
         y += 32;
+        addAction(x2, y, w2, "Поиск серверов", () -> client.setScreen(new ServerFinderScreen()));
+        y += 32;
         addToggle(x2, y, w2, "Auto Totem", () -> AutoTotem.enabled, () -> AutoTotem.enabled = !AutoTotem.enabled);
         y += 32;
         addAction(x2, y, w2, "Список друзей", () -> client.setScreen(new FriendListScreen()));

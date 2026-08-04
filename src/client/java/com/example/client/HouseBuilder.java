@@ -2,7 +2,6 @@ package com.example.client;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -91,7 +90,6 @@ public class HouseBuilder {
             BlockPos neighbor = target.relative(d);
             BlockState state = level.getBlockState(neighbor);
             if (level.isLoaded(neighbor) && !state.isAir() && state.getFluidState().isEmpty()) {
-                player.lookAt(EntityAnchorArgument.Anchor.EYES, Vec3.atCenterOf(neighbor));
                 BlockHitResult hit = new BlockHitResult(Vec3.atCenterOf(neighbor), d.getOpposite(), neighbor, false);
                 client.gameMode.useItemOn(player, InteractionHand.MAIN_HAND, hit);
                 player.swing(InteractionHand.MAIN_HAND);

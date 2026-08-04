@@ -247,23 +247,18 @@ public class WorldVisuals {
             cumStartMs = now;
         }
 
-        boolean anal = elapsed >= 10000;
-        double ph = (now % 700) / 700.0 * Math.PI * 2;
-        double headFrac = (Math.sin(ph) + 1.0) / 2.0;
-
+        boolean mouthEnd = elapsed >= 10000;
         double hyBase = feet.y + 0.85;
         Vec3 base = new Vec3(feet.x + dx * 0.1, hyBase, feet.z + dz * 0.1);
         Vec3 tip = new Vec3(feet.x + dx * 0.1, hyBase + 0.55, feet.z + dz * 0.1);
-        Vec3 head = new Vec3(feet.x + dx * 0.1, hyBase + 0.12 + headFrac * 0.43, feet.z + dz * 0.1);
         Vec3 ballL = new Vec3(feet.x - dz * 0.05, feet.y + 0.24, feet.z + dx * 0.05);
         Vec3 ballR = new Vec3(feet.x + dz * 0.05, feet.y + 0.24, feet.z - dx * 0.05);
 
         double[] b = project(gui, client, base, camPos, fwd, w, h);
         double[] t = project(gui, client, tip, camPos, fwd, w, h);
-        double[] hd = project(gui, client, head, camPos, fwd, w, h);
         double[] bl = project(gui, client, ballL, camPos, fwd, w, h);
         double[] br = project(gui, client, ballR, camPos, fwd, w, h);
-        if (b == null || t == null || hd == null || bl == null || br == null) {
+        if (b == null || t == null || bl == null || br == null) {
             return;
         }
 
@@ -272,11 +267,22 @@ public class WorldVisuals {
 
         line(gui, b[0], b[1], t[0], t[1], 3.0f, PENIS_COLOR);
         fillCircle(gui, t[0], t[1], rScale * 0.8, GLANS_COLOR);
-        fillCircle(gui, hd[0], hd[1], rScale * 1.1, HEAD_COLOR);
         fillCircle(gui, bl[0], bl[1], rScale * 0.6, BALL_COLOR);
         fillCircle(gui, br[0], br[1], rScale * 0.6, BALL_COLOR);
 
-        if (anal) {
+        if (mouthEnd) {
+            double mThrust = Math.max(0.0, Math.sin((now % 420) / 420.0 * Math.PI * 2));
+            Vec3 mBase = new Vec3(feet.x + dx * 0.62, feet.y + 1.3, feet.z + dz * 0.62);
+            Vec3 mTip = new Vec3(feet.x + dx * (0.12 + mThrust * 0.2), feet.y + 1.56, feet.z + dz * (0.12 + mThrust * 0.2));
+            double[] mb = project(gui, client, mBase, camPos, fwd, w, h);
+            double[] mt = project(gui, client, mTip, camPos, fwd, w, h);
+            if (mb != null && mt != null) {
+                line(gui, mb[0], mb[1], mt[0], mt[1], 3.0f, GIVER_COLOR);
+                fillCircle(gui, mt[0], mt[1], rScale * 0.7, GIVER_GLANS);
+            }
+        }
+
+        if (!mouthEnd) {
             double ogdx = -dx;
             double ogdz = -dz;
             double thrustPh = Math.sin((now % 500) / 500.0 * Math.PI * 2);

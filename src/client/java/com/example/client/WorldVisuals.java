@@ -11,6 +11,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3fc;
 
+import java.util.UUID;
+
 public class WorldVisuals {
     public static boolean chinaHat = false;
     public static boolean jumpCircle = false;
@@ -20,6 +22,7 @@ public class WorldVisuals {
     public static boolean penis = false;
     public static boolean pumping = false;
     public static volatile long cumStartMs = -1;
+    public static volatile UUID fuckTargetUuid = null;
 
     public static float hatScale = 1.0f;
     public static float circleRadius = 3.0f;
@@ -156,16 +159,28 @@ public class WorldVisuals {
 
     private static void renderPenis(GuiGraphics gui, Minecraft client, Entity e, Vec3 feet,
                                     Vec3 camPos, Vector3fc fwd, int w, int h) {
+        boolean isTarget = fuckTargetUuid != null && e.getUUID().equals(fuckTargetUuid);
+        boolean pumpMe = pumping && (fuckTargetUuid == null || isTarget);
+
         float yaw = e.getYRot();
         double dx = -Math.sin(Math.toRadians(yaw));
         double dz = Math.cos(Math.toRadians(yaw));
         double px = -dz;
         double pz = dx;
+        if (isTarget && client.player != null) {
+            double toX = client.player.getX() - feet.x;
+            double toZ = client.player.getZ() - feet.z;
+            double len = Math.hypot(toX, toZ);
+            if (len > 0.001) {
+                dx = toX / len;
+                dz = toZ / len;
+            }
+        }
 
         long now = System.currentTimeMillis();
         double stroke = 0;
         double forward = 0.40;
-        if (pumping) {
+        if (pumpMe) {
             double ph = (now % 2000) / 1000.0 * Math.PI;
             stroke = Math.sin(ph) * 0.14;
             forward = 0.40 + Math.abs(Math.sin(ph)) * 0.12;
@@ -193,12 +208,15 @@ public class WorldVisuals {
         fillCircle(gui, bl[0], bl[1], rScale * 0.6, BALL_COLOR);
         fillCircle(gui, br[0], br[1], rScale * 0.6, BALL_COLOR);
 
-        if (cumStartMs > 0) {
+        if (cumStartMs > 0 && (fuckTargetUuid == null || isTarget)) {
             long elapsed = now - cumStartMs;
             if (elapsed < 800) {
                 renderCum(gui, t, elapsed, rScale);
             } else {
                 cumStartMs = -1;
+                if (isTarget) {
+                    fuckTargetUuid = null;
+                }
             }
         }
     }

@@ -39,7 +39,8 @@ public class DupeModClient implements ClientModInitializer {
     private static boolean wasF9Down = false;
     private static boolean wasF10Down = false;
     private static boolean wasF11Down = false;
-    private static boolean wasPDown = false;    private static boolean wasF4Down = false;
+    private static boolean wasPDown = false;
+    private static boolean wasLDown = false;    private static boolean wasF4Down = false;
     private static boolean wasF5Down = false;
     private static boolean wasF12Down = false;
     private static boolean wasKDown = false;
@@ -186,6 +187,12 @@ public class DupeModClient implements ClientModInitializer {
                 togglePump(client);
             }
             wasPDown = isPDown;
+
+            boolean isLDown = GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_L) == GLFW.GLFW_PRESS;
+            if (inGame && isLDown && !wasLDown) {
+                targetPump(client);
+            }
+            wasLDown = isLDown;
 
             boolean isKDown = GLFW.glfwGetKey(handle, Binds.get(Binds.KILLAURA)) == GLFW.GLFW_PRESS;
             if (inGame && isKDown && !wasKDown) {
@@ -357,6 +364,46 @@ public class DupeModClient implements ClientModInitializer {
             WorldVisuals.cumStartMs = -1;
             message(client, "Подрочи...");
         }
+    }
+
+    private static void targetPump(Minecraft client) {
+        if (client.player == null || client.level == null) {
+            return;
+        }
+        if (WorldVisuals.pumping && WorldVisuals.fuckTargetUuid != null) {
+            WorldVisuals.fuckTargetUuid = null;
+            WorldVisuals.pumping = false;
+            WorldVisuals.cumStartMs = -1;
+            message(client, "Отпустил");
+            return;
+        }
+        net.minecraft.world.phys.Vec3 eye = client.player.getEyePosition();
+        net.minecraft.world.phys.Vec3 look = client.player.getLookAngle();
+        double bestDot = 0.5;
+        net.minecraft.world.entity.Entity best = null;
+        for (net.minecraft.world.entity.Entity e : client.level.entitiesForRendering()) {
+            if (e == client.player || !(e instanceof net.minecraft.world.entity.player.Player)) {
+                continue;
+            }
+            net.minecraft.world.phys.Vec3 center = e.getBoundingBox().getCenter();
+            double dist = eye.distanceTo(center);
+            if (dist > 16.0) {
+                continue;
+            }
+            double dot = center.subtract(eye).normalize().dot(look);
+            if (dot > bestDot) {
+                bestDot = dot;
+                best = e;
+            }
+        }
+        if (best == null) {
+            message(client, "Никого нет перед камерой");
+            return;
+        }
+        WorldVisuals.fuckTargetUuid = best.getUUID();
+        WorldVisuals.pumping = true;
+        WorldVisuals.cumStartMs = -1;
+        message(client, "Трахнул " + best.getName().getString());
     }
 
     public static void toggleGhostBlocks(Minecraft client) {

@@ -32,6 +32,9 @@ public class DupeGuiScreen extends Screen {
     private final Minecraft client = Minecraft.getInstance();
     private int category = 0;
     private QuickCommandBox quickCommandBox;
+    private EditBox tpX;
+    private EditBox tpY;
+    private EditBox tpZ;
 
     public DupeGuiScreen() {
         super(Component.literal("Flash Visual"));
@@ -192,6 +195,36 @@ public class DupeGuiScreen extends Screen {
         y += 32;
         addCycle(cx, y, cw, "Время", () -> TimeChanger.MODE_NAMES[TimeChanger.mode],
             () -> TimeChanger.mode = (TimeChanger.mode + 1) % TimeChanger.MODE_NAMES.length);
+        y += 38;
+
+        int fw = (cw - 16) / 3;
+        tpX = new EditBox(client.font, cx, y, fw, 18, Component.literal("X"));
+        tpY = new EditBox(client.font, cx + fw + 8, y, fw, 18, Component.literal("Y"));
+        tpZ = new EditBox(client.font, cx + (fw + 8) * 2, y, fw, 18, Component.literal("Z"));
+        for (EditBox box : new EditBox[] { tpX, tpY, tpZ }) {
+            box.setMaxLength(14);
+            addRenderableWidget(box);
+        }
+        if (client.player != null) {
+            tpX.setValue(String.valueOf((int) Math.floor(client.player.getX())));
+            tpY.setValue(String.valueOf((int) Math.floor(client.player.getY())));
+            tpZ.setValue(String.valueOf((int) Math.floor(client.player.getZ())));
+        }
+        y += 24;
+        addAction(cx, y, cw, "Телепорт по координатам", () -> {
+            try {
+                double x = Double.parseDouble(tpX.getValue().trim());
+                double yv = Double.parseDouble(tpY.getValue().trim());
+                double z = Double.parseDouble(tpZ.getValue().trim());
+                DupeModClient.tpTo(client, x, yv, z);
+            } catch (NumberFormatException ex) {
+                if (client.player != null) {
+                    client.player.displayClientMessage(Component.literal("Неверные координаты"), false);
+                }
+            }
+        });
+        y += 28;
+        addAction(cx, y, cw, "Телепорт к цели (прицел)", () -> DupeModClient.tpToTarget(client));
     }
 
     private void buildSound(int cx, int cw) {

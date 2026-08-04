@@ -13,6 +13,7 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.Container;
 import net.minecraft.world.InteractionHand;
@@ -25,6 +26,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import org.lwjgl.glfw.GLFW;
 
@@ -436,6 +438,26 @@ public class DupeModClient implements ClientModInitializer {
         WorldVisuals.autoCumDone = false;
         WorldVisuals.actStartMs = System.currentTimeMillis();
         message(client, blowjobMode ? "Минет " + best.getName().getString() : "Трахнул " + best.getName().getString());
+    }
+
+    public static void tpTo(Minecraft client, double x, double y, double z) {
+        if (client.player == null) {
+            return;
+        }
+        client.player.setPos(x, y, z);
+        client.player.setDeltaMovement(0.0, 0.0, 0.0);
+        if (client.getConnection() != null) {
+            client.getConnection().send(new ServerboundMovePlayerPacket.Pos(x, y, z, false, true));
+        }
+        client.player.displayClientMessage(Component.literal("ТП: " + (int) Math.floor(x) + " " + (int) Math.floor(y) + " " + (int) Math.floor(z)), false);
+    }
+
+    public static void tpToTarget(Minecraft client) {
+        if (client.hitResult instanceof EntityHitResult ehr && ehr.getEntity() instanceof Player p) {
+            tpTo(client, p.getX(), p.getY(), p.getZ());
+        } else if (client.player != null) {
+            client.player.displayClientMessage(Component.literal("Наведи прицел на игрока"), false);
+        }
     }
 
     public static void toggleGhostBlocks(Minecraft client) {

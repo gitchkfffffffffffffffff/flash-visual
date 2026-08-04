@@ -191,7 +191,8 @@ public class WorldVisuals {
         gui.pose().pushMatrix();
         gui.pose().translate((float) x0, (float) y0);
         gui.pose().rotate((float) Math.atan2(dy, dx));
-        gui.fill(0, -(int) (th / 2f), (int) len, (int) (th / 2f), color);
+        int half = Math.max(1, (int) (th / 2f));
+        gui.fill(0, -half, (int) len, half, color);
         gui.pose().popMatrix();
     }
 }

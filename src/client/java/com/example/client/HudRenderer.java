@@ -163,24 +163,30 @@ public class HudRenderer {
         long dur = -1;
         boolean playing = false;
 
-        if (smtcHasTitle && smtcDur > 0) {
+        if (smtcHasTitle) {
+            // SMTC даёт название даже когда длительность неизвестна (стримы, вкладки браузеров)
             playing = smtcPlaying;
             title = SmtcReader.title();
             artist = SmtcReader.artist() == null ? "" : SmtcReader.artist();
             dur = smtcDur;
-
-            long poll = SmtcReader.lastPollMs();
-            if (poll > 0 && playing) {
-                long now = System.currentTimeMillis();
-                long elapsed = now - poll;
-                if (elapsed < 0) elapsed = 0;
-                if (elapsed < 2000) {
-                    pos = Math.min(smtcPos + elapsed, dur);
+            if (playing) {
+                if (dur > 0) {
+                    long poll = SmtcReader.lastPollMs();
+                    if (poll > 0) {
+                        long now = System.currentTimeMillis();
+                        long elapsed = now - poll;
+                        if (elapsed < 0) elapsed = 0;
+                        if (elapsed < 2000) {
+                            pos = Math.min(smtcPos + elapsed, dur);
+                        } else {
+                            pos = smtcPos;
+                        }
+                    } else {
+                        pos = smtcPos;
+                    }
                 } else {
                     pos = smtcPos;
                 }
-            } else {
-                pos = smtcPos;
             }
         } else {
             // фоллбек на парсинг заголовков окон (обновляется в tick())
@@ -197,13 +203,11 @@ public class HudRenderer {
             }
         }
 
-        // защита от overshoot
-        if (playing && dur > 0 && pos >= 0) {
+        // защита от overshoot (не гасим playing, если длительность неизвестна)
+        if (dur > 0 && pos >= 0) {
             pos = Math.min(pos, dur);
-        } else {
-            playing = false;
-            pos = -1;
-            dur = -1;
+        } else if (dur <= 0 && playing) {
+            pos = pos >= 0 ? pos : -1;
         }
 
         int panelH = 46;

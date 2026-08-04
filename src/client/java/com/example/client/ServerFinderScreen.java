@@ -6,8 +6,12 @@ import com.google.gson.JsonParser;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.ConnectScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.multiplayer.ServerData;
+import net.minecraft.client.multiplayer.TransferState;
+import net.minecraft.client.multiplayer.resolver.ServerAddress;
 import net.minecraft.network.chat.Component;
 
 import java.io.BufferedReader;
@@ -17,6 +21,8 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ServerFinderScreen extends Screen {
@@ -24,6 +30,13 @@ public class ServerFinderScreen extends Screen {
     private static final int STATE_ONLINE = 1;
     private static final int STATE_ONLINE_EMPTY = 2;
     private static final int STATE_OFFLINE = 3;
+
+    private static final String[] AC_KEYWORDS = {
+        "anticheat", "anti-cheat", "anti cheat", "nocheatplus", "no cheat plus",
+        "matrix", "grim", "vulcan", "aac", "negativity", "spartan", "verus",
+        "zeus", "anticom", "antibot", "geyser", "oreo", "wraith", "lynx",
+        "intave", "ncp", "anti-aura", "antiaura"
+    };
 
     private final Minecraft client = Minecraft.getInstance();
     private final List<ServerEntry> entries = new ArrayList<>();
@@ -43,6 +56,8 @@ public class ServerFinderScreen extends Screen {
         volatile int players = 0;
         volatile int max = 0;
         volatile String info = "";
+        volatile String motd = "";
+        volatile boolean antiCheat = false;
 
         ServerEntry(String ip) {
             this.ip = ip.trim();
@@ -71,6 +86,8 @@ public class ServerFinderScreen extends Screen {
             b -> copySelected()));
         addRenderableWidget(new Ui.StyledButton(760, 30, 60, 20, Component.literal("Удалить"), 0xFF444444,
             b -> removeSelected()));
+        addRenderableWidget(new Ui.StyledButton(16, height - 34, 120, 20, Component.literal("Подключиться"), Ui.GREEN,
+            b -> connectSelected()));
         addRenderableWidget(new Ui.StyledButton(client.getWindow().getGuiScaledWidth() - 80, height - 34, 60, 20,
             Component.literal("Назад"), 0xFF444444, b -> client.setScreen(new DupeGuiScreen())));
     }
@@ -156,10 +173,54 @@ public class ServerFinderScreen extends Screen {
                 ver = v.getAsString();
             }
         }
+        String motd = "";
+        if (root.has("motd")) {
+            JsonElement m = root.get("motd");
+            if (m != null && m.isJsonObject()) {
+                JsonObject mo = m.getAsJsonObject();
+                JsonElement clean = mo.get("clean");
+                if (clean != null && !clean.isJsonNull()) {
+                    if (clean.isJsonArray()) {
+                        List<String> lines = new ArrayList<>();
+                        for (JsonElement le : clean.getAsJsonArray()) {
+                            if (le != null && !le.isJsonNull()) {
+                                lines.add(le.getAsString().trim());
+                            }
+                        }
+                        motd = String.join(" · ", lines);
+                    } else {
+                        motd = clean.getAsString();
+                    }
+                }
+            }
+        }
         e.players = players;
         e.max = max;
+        e.motd = motd;
+        e.antiCheat = hasAntiCheat(motd);
         e.info = ver;
         e.state = players == 0 ? STATE_ONLINE_EMPTY : STATE_ONLINE;
+    }
+
+    private static boolean hasAntiCheat(String motd) {
+        String low = motd.toLowerCase(Locale.ROOT);
+        for (String kw : AC_KEYWORDS) {
+            if (low.contains(kw)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void connectSelected() {
+        if (selected < 0 || selected >= entries.size()) {
+            message("Сначала выбери сервер");
+            return;
+        }
+        ServerEntry e = entries.get(selected);
+        ServerData data = new ServerData(e.ip, e.ip, ServerData.Type.OTHER);
+        ServerAddress addr = ServerAddress.parseString(e.ip);
+        ConnectScreen.startConnecting(this, client, addr, data, false, new TransferState(Map.of(), Map.of(), false));
     }
 
     private void copySelected() {
@@ -278,8 +339,12 @@ public class ServerFinderScreen extends Screen {
             gui.fill(listX + 6, y0, listX + 10, y0 + 18, color);
             gui.drawString(client.font, Component.literal(e.ip), listX + 16, y0 + 5, 0xFFFFFFFF);
             String right = e.state == STATE_CHECKING ? "проверка..." : (e.state == STATE_OFFLINE ? e.info : (e.info + " · " + e.players + "/" + e.max + (e.players == 0 ? " · ПУСТО" : "")));
+            int rightColor = e.state == STATE_OFFLINE ? 0xFF777777 : (e.antiCheat ? 0xFFFF5555 : 0xFF9A9A9A);
+            if (e.antiCheat && e.state != STATE_CHECKING && e.state != STATE_OFFLINE) {
+                right += " · ⛔AC";
+            }
             gui.drawString(client.font, Component.literal(right), listX + listW - 16 - client.font.width(right), y0 + 5,
-                e.state == STATE_OFFLINE ? 0xFF777777 : 0xFF9A9A9A);
+                rightColor);
             if (selected == idx) {
                 gui.renderOutline(listX + 6, y0, listW - 12, 18, 0xFFFFFFFF);
             }
@@ -293,6 +358,8 @@ public class ServerFinderScreen extends Screen {
         }
         String stat = "Серверов: " + entries.size() + " · Пустых: " + emptyCount + (checking.get() ? " · проверка..." : "");
         gui.drawString(client.font, Component.literal(stat), listX, h - 60, 0xFF9A9A9A);
+        gui.drawString(client.font, Component.literal("⛔AC = на сервере упомянут античит · клик по строке — выбор, Подключиться — вход"),
+            listX, h - 48, 0xFF6A6A6A);
     }
 
     private static int rowColor(int state) {

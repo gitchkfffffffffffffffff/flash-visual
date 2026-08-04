@@ -282,6 +282,16 @@ public class WorldVisuals {
             fillCircle(gui, at[0], at[1], rScale * 0.7, GIVER_GLANS);
         }
 
+        double mThrust = Math.max(0.0, Math.sin((now % 420) / 420.0 * Math.PI * 2));
+        Vec3 mBase = new Vec3(feet.x + dx * 0.62, feet.y + 1.3, feet.z + dz * 0.62);
+        Vec3 mTip = new Vec3(feet.x + dx * (0.12 + mThrust * 0.2), feet.y + 1.56, feet.z + dz * (0.12 + mThrust * 0.2));
+        double[] mb = project(gui, client, mBase, camPos, fwd, w, h);
+        double[] mt = project(gui, client, mTip, camPos, fwd, w, h);
+        if (mb != null && mt != null) {
+            line(gui, mb[0], mb[1], mt[0], mt[1], 3.0f, GIVER_COLOR);
+            fillCircle(gui, mt[0], mt[1], rScale * 0.7, GIVER_GLANS);
+        }
+
         if (cumStartMs > 0) {
             long cElapsed = now - cumStartMs;
             if (cElapsed < 800) {

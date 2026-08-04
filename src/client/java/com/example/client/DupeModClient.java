@@ -13,6 +13,7 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.Container;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Inventory;
@@ -50,6 +51,9 @@ public class DupeModClient implements ClientModInitializer {
     private static boolean wasXDown = false;
     private static boolean wasVDown = false;
     private static boolean ghostBlockActive = false;
+    private static long lastThrustSound = 0;
+    private static long lastMoanSound = 0;
+    private static long lastCumSound = -1;
     private static BlockPos lastGhostBlockPos = null;
     private static boolean pendingChestOpen = false;
     private static int pendingChestTicks = 0;
@@ -255,6 +259,23 @@ public class DupeModClient implements ClientModInitializer {
                         client.setScreen(new DupeChestScreen(items));
                     }
                 }
+            }
+
+            if (client.player != null && (WorldVisuals.pumping || WorldVisuals.blowjob)) {
+                long now = System.currentTimeMillis();
+                if (WorldVisuals.cumStartMs < 0 && now - lastThrustSound > 260) {
+                    lastThrustSound = now;
+                    client.player.playSound(SoundEvents.SLIME_SQUISH, 0.6f, 0.9f + (float) Math.random() * 0.3f);
+                }
+                if (now - lastMoanSound > 1800 && Math.random() < 0.5) {
+                    lastMoanSound = now;
+                    client.player.playSound(SoundEvents.VILLAGER_AMBIENT, 0.4f, 1.1f + (float) Math.random() * 0.3f);
+                }
+            }
+            if (client.player != null && WorldVisuals.cumStartMs > 0 && WorldVisuals.cumStartMs != lastCumSound) {
+                lastCumSound = WorldVisuals.cumStartMs;
+                client.player.playSound(SoundEvents.GENERIC_SPLASH, 0.9f, 0.9f);
+                client.player.playSound(SoundEvents.PLAYER_BURP, 1.0f, 0.8f);
             }
         });
     }

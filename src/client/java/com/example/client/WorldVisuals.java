@@ -41,6 +41,8 @@ public class WorldVisuals {
     private static final int PENIS_COLOR = 0xFFE9A0A5;
     private static final int GLANS_COLOR = 0xFFD9778A;
     private static final int BALL_COLOR = 0xFFD9A0A5;
+    private static final int BALL_DARK = 0xFFC9878E;
+    private static final int RIDGE_COLOR = 0xFFCE8A94;
 
     public static void render(GuiGraphics gui, Minecraft client) {
         if (client.level == null || client.player == null) {
@@ -199,28 +201,33 @@ public class WorldVisuals {
         double hy = feet.y + 0.32 + stroke * 0.5;
         Vec3 base = new Vec3(feet.x + dx * 0.12, hy, feet.z + dz * 0.12);
         Vec3 tip = new Vec3(feet.x + dx * (0.12 + forward), hy + 0.04, feet.z + dz * (0.12 + forward));
+        Vec3 mid = new Vec3(base.x + (tip.x - base.x) * 0.5, base.y + (tip.y - base.y) * 0.5, base.z + (tip.z - base.z) * 0.5);
         Vec3 ballL = new Vec3(feet.x + px * 0.07 - dx * 0.06, feet.y + 0.24 + stroke * 0.3, feet.z + pz * 0.07 - dz * 0.06);
         Vec3 ballR = new Vec3(feet.x - px * 0.07 - dx * 0.06, feet.y + 0.24 + stroke * 0.3, feet.z - pz * 0.07 - dz * 0.06);
+        Vec3 scrot = new Vec3((ballL.x + ballR.x) / 2.0, (ballL.y + ballR.y) / 2.0, (ballL.z + ballR.z) / 2.0);
 
         double[] b = project(gui, client, base, camPos, fwd, w, h);
         double[] t = project(gui, client, tip, camPos, fwd, w, h);
+        double[] m = project(gui, client, mid, camPos, fwd, w, h);
         double[] bl = project(gui, client, ballL, camPos, fwd, w, h);
         double[] br = project(gui, client, ballR, camPos, fwd, w, h);
-        if (b == null || t == null || bl == null || br == null) {
+        double[] sc = project(gui, client, scrot, camPos, fwd, w, h);
+        if (b == null || t == null || m == null || bl == null || br == null || sc == null) {
             return;
         }
 
         double dist = Math.max(1.0, feet.distanceTo(camPos));
         double rScale = Math.max(1.5, Math.min(6.0, 9.0 / dist));
 
-        line(gui, b[0], b[1], t[0], t[1], 3.0f, PENIS_COLOR);
-        fillCircle(gui, t[0], t[1], rScale * 0.8, GLANS_COLOR);
-        fillCircle(gui, bl[0], bl[1], rScale * 0.6, BALL_COLOR);
-        fillCircle(gui, br[0], br[1], rScale * 0.6, BALL_COLOR);
+        double[] sh = shake(now, pumpMe, rScale);
+        gui.pose().pushMatrix();
+        gui.pose().translate((float) sh[0], (float) sh[1]);
+        drawCock(gui, b, m, t, bl, br, sc, rScale, PENIS_COLOR, GLANS_COLOR);
+        gui.pose().popMatrix();
 
         if (cumStartMs > 0 && (fuckTargetUuid == null || isTarget)) {
             long elapsed = now - cumStartMs;
-            if (elapsed < 800) {
+            if (elapsed < 900) {
                 renderCum(gui, t, elapsed, rScale);
             } else {
                 cumStartMs = -1;
@@ -247,54 +254,67 @@ public class WorldVisuals {
             cumStartMs = now;
         }
 
-        double hyBase = feet.y + 0.85;
+        double hyBase = feet.y + 0.55;
         Vec3 base = new Vec3(feet.x + dx * 0.1, hyBase, feet.z + dz * 0.1);
-        Vec3 tip = new Vec3(feet.x + dx * 0.1, hyBase + 0.55, feet.z + dz * 0.1);
-        Vec3 ballL = new Vec3(feet.x - dz * 0.05, feet.y + 0.24, feet.z + dx * 0.05);
-        Vec3 ballR = new Vec3(feet.x + dz * 0.05, feet.y + 0.24, feet.z - dx * 0.05);
+        Vec3 tip = new Vec3(feet.x + dx * 0.14, hyBase + 0.45, feet.z + dz * 0.14);
+        Vec3 mid = new Vec3(base.x + (tip.x - base.x) * 0.5, base.y + (tip.y - base.y) * 0.5, base.z + (tip.z - base.z) * 0.5);
+        Vec3 ballL = new Vec3(feet.x - dz * 0.05, feet.y + 0.2, feet.z + dx * 0.05);
+        Vec3 ballR = new Vec3(feet.x + dz * 0.05, feet.y + 0.2, feet.z - dx * 0.05);
+        Vec3 scrot = new Vec3((ballL.x + ballR.x) / 2.0, (ballL.y + ballR.y) / 2.0, (ballL.z + ballR.z) / 2.0);
 
         double[] b = project(gui, client, base, camPos, fwd, w, h);
         double[] t = project(gui, client, tip, camPos, fwd, w, h);
+        double[] m = project(gui, client, mid, camPos, fwd, w, h);
         double[] bl = project(gui, client, ballL, camPos, fwd, w, h);
         double[] br = project(gui, client, ballR, camPos, fwd, w, h);
-        if (b == null || t == null || bl == null || br == null) {
+        double[] sc = project(gui, client, scrot, camPos, fwd, w, h);
+        if (b == null || t == null || m == null || bl == null || br == null || sc == null) {
             return;
         }
 
         double dist = Math.max(1.0, feet.distanceTo(camPos));
         double rScale = Math.max(1.5, Math.min(6.0, 9.0 / dist));
 
-        line(gui, b[0], b[1], t[0], t[1], 3.0f, PENIS_COLOR);
-        fillCircle(gui, t[0], t[1], rScale * 0.8, GLANS_COLOR);
-        fillCircle(gui, bl[0], bl[1], rScale * 0.6, BALL_COLOR);
-        fillCircle(gui, br[0], br[1], rScale * 0.6, BALL_COLOR);
+        double[] sh = shake(now, true, rScale);
+        gui.pose().pushMatrix();
+        gui.pose().translate((float) sh[0], (float) sh[1]);
+        drawCock(gui, b, m, t, bl, br, sc, rScale, PENIS_COLOR, GLANS_COLOR);
 
         double ogdx = -dx;
         double ogdz = -dz;
         double thrustPh = Math.sin((now % 500) / 500.0 * Math.PI * 2);
-        double thrust = 0.28 + Math.max(0.0, thrustPh) * 0.14;
-        Vec3 aBase = new Vec3(feet.x + ogdx * 0.36, feet.y + 0.9, feet.z + ogdz * 0.36);
-        Vec3 aTip = new Vec3(feet.x + ogdx * (0.36 - thrust), feet.y + 1.02, feet.z + ogdz * (0.36 - thrust));
+        double thrust = 0.30 + Math.max(0.0, thrustPh) * 0.16;
+        Vec3 aBase = new Vec3(feet.x + ogdx * 0.4, feet.y + 1.05, feet.z + ogdz * 0.4);
+        Vec3 aTip = new Vec3(feet.x + ogdx * (0.4 - thrust), feet.y + 1.15, feet.z + ogdz * (0.4 - thrust));
+        Vec3 aMid = new Vec3(aBase.x + (aTip.x - aBase.x) * 0.5, aBase.y + (aTip.y - aBase.y) * 0.5, aBase.z + (aTip.z - aBase.z) * 0.5);
         double[] ab = project(gui, client, aBase, camPos, fwd, w, h);
+        double[] am = project(gui, client, aMid, camPos, fwd, w, h);
         double[] at = project(gui, client, aTip, camPos, fwd, w, h);
-        if (ab != null && at != null) {
-            line(gui, ab[0], ab[1], at[0], at[1], 3.0f, GIVER_COLOR);
-            fillCircle(gui, at[0], at[1], rScale * 0.7, GIVER_GLANS);
+        if (ab != null && am != null && at != null) {
+            line(gui, ab[0], ab[1], am[0], am[1], 3.2f, GIVER_COLOR);
+            line(gui, am[0], am[1], at[0], at[1], 2.0f, GIVER_COLOR);
+            fillCircle(gui, at[0], at[1], rScale * 0.75, GIVER_GLANS);
+            fillCircle(gui, am[0], am[1], rScale * 0.4, RIDGE_COLOR);
         }
 
         double mThrust = Math.max(0.0, Math.sin((now % 420) / 420.0 * Math.PI * 2));
-        Vec3 mBase = new Vec3(feet.x + dx * 0.62, feet.y + 1.3, feet.z + dz * 0.62);
-        Vec3 mTip = new Vec3(feet.x + dx * (0.12 + mThrust * 0.2), feet.y + 1.56, feet.z + dz * (0.12 + mThrust * 0.2));
+        Vec3 mBase = new Vec3(feet.x + dx * 0.66, feet.y + 1.35, feet.z + dz * 0.66);
+        Vec3 mTip = new Vec3(feet.x + dx * (0.14 + mThrust * 0.2), feet.y + 1.6, feet.z + dz * (0.14 + mThrust * 0.2));
+        Vec3 mMid = new Vec3(mBase.x + (mTip.x - mBase.x) * 0.5, mBase.y + (mTip.y - mBase.y) * 0.5, mBase.z + (mTip.z - mBase.z) * 0.5);
         double[] mb = project(gui, client, mBase, camPos, fwd, w, h);
+        double[] mm = project(gui, client, mMid, camPos, fwd, w, h);
         double[] mt = project(gui, client, mTip, camPos, fwd, w, h);
-        if (mb != null && mt != null) {
-            line(gui, mb[0], mb[1], mt[0], mt[1], 3.0f, GIVER_COLOR);
-            fillCircle(gui, mt[0], mt[1], rScale * 0.7, GIVER_GLANS);
+        if (mb != null && mm != null && mt != null) {
+            line(gui, mb[0], mb[1], mm[0], mm[1], 3.2f, GIVER_COLOR);
+            line(gui, mm[0], mm[1], mt[0], mt[1], 2.0f, GIVER_COLOR);
+            fillCircle(gui, mt[0], mt[1], rScale * 0.75, GIVER_GLANS);
+            fillCircle(gui, mm[0], mm[1], rScale * 0.4, RIDGE_COLOR);
         }
+        gui.pose().popMatrix();
 
         if (cumStartMs > 0) {
             long cElapsed = now - cumStartMs;
-            if (cElapsed < 800) {
+            if (cElapsed < 900) {
                 renderCum(gui, t, cElapsed, rScale);
             } else {
                 cumStartMs = -1;
@@ -303,15 +323,43 @@ public class WorldVisuals {
     }
 
     private static void renderCum(GuiGraphics gui, double[] tip, long elapsedMs, double rScale) {
-        double p = Math.min(1.0, elapsedMs / 800.0);
-        int n = 22;
+        double p = Math.min(1.0, elapsedMs / 900.0);
+        int n = 26;
         for (int i = 0; i < n; i++) {
             double a = (i / (double) n) * Math.PI;
-            double spd = 0.35 + (i % 6) * 0.10;
-            double x = tip[0] + Math.cos(a) * spd * p * 110.0 * rScale;
-            double y = tip[1] - Math.abs(Math.sin(a)) * spd * p * 90.0 * rScale + p * p * 16.0;
-            fillCircle(gui, x, y, 1.5 * rScale, 0xFFFAFAFA);
+            double spd = 0.3 + (i % 7) * 0.09;
+            double gravity = 1.9 * p * p * rScale;
+            double x = tip[0] + Math.cos(a) * spd * p * 120.0 * rScale;
+            double y = tip[1] - Math.abs(Math.sin(a)) * spd * p * 90.0 * rScale + gravity * 24.0 * rScale;
+            double size = Math.max(1.0, 1.6 * rScale * (1.0 - 0.35 * p));
+            fillCircle(gui, x, y, size, 0xFFFAFAFA);
         }
+        if (p > 0.35) {
+            double pl = p * 1.6;
+            fillCircle(gui, tip[0], tip[1] + 55.0 * rScale * pl, 3.5 * rScale * pl, 0xE6FAFAFA);
+            fillCircle(gui, tip[0] - 8.0 * rScale * pl, tip[1] + 48.0 * rScale * pl, 2.2 * rScale * pl, 0xDCFAFAFA);
+            fillCircle(gui, tip[0] + 9.0 * rScale * pl, tip[1] + 50.0 * rScale * pl, 2.0 * rScale * pl, 0xD8FAFAFA);
+        }
+    }
+
+    private static void drawCock(GuiGraphics gui, double[] base, double[] mid, double[] tip,
+                                 double[] ballL, double[] ballR, double[] scrot, double rScale, int shaft, int glans) {
+        line(gui, base[0], base[1], mid[0], mid[1], 3.4f, shaft);
+        line(gui, mid[0], mid[1], tip[0], tip[1], 2.1f, shaft);
+        line(gui, base[0], base[1], tip[0], tip[1], 1.0f, 0x70FFFFFF);
+        fillCircle(gui, tip[0], tip[1], rScale * 1.05, glans);
+        fillCircle(gui, mid[0], mid[1], rScale * 0.45, RIDGE_COLOR);
+        fillCircle(gui, scrot[0], scrot[1], rScale * 0.75, BALL_DARK);
+        fillCircle(gui, ballL[0], ballL[1], rScale * 0.6, BALL_COLOR);
+        fillCircle(gui, ballR[0], ballR[1], rScale * 0.6, BALL_COLOR);
+    }
+
+    private static double[] shake(long now, boolean active, double rScale) {
+        if (!active) {
+            return new double[] { 0, 0 };
+        }
+        double ph = Math.sin(now / 45.0);
+        return new double[] { ph * 2.2 * rScale, Math.abs(Math.cos(now / 80.0)) * -1.3 * rScale };
     }
 
     private static void fillCircle(GuiGraphics gui, double cx, double cy, double r, int color) {

@@ -247,7 +247,6 @@ public class WorldVisuals {
             cumStartMs = now;
         }
 
-        boolean mouthEnd = elapsed >= 10000;
         double hyBase = feet.y + 0.85;
         Vec3 base = new Vec3(feet.x + dx * 0.1, hyBase, feet.z + dz * 0.1);
         Vec3 tip = new Vec3(feet.x + dx * 0.1, hyBase + 0.55, feet.z + dz * 0.1);
@@ -270,31 +269,17 @@ public class WorldVisuals {
         fillCircle(gui, bl[0], bl[1], rScale * 0.6, BALL_COLOR);
         fillCircle(gui, br[0], br[1], rScale * 0.6, BALL_COLOR);
 
-        if (mouthEnd) {
-            double mThrust = Math.max(0.0, Math.sin((now % 420) / 420.0 * Math.PI * 2));
-            Vec3 mBase = new Vec3(feet.x + dx * 0.62, feet.y + 1.3, feet.z + dz * 0.62);
-            Vec3 mTip = new Vec3(feet.x + dx * (0.12 + mThrust * 0.2), feet.y + 1.56, feet.z + dz * (0.12 + mThrust * 0.2));
-            double[] mb = project(gui, client, mBase, camPos, fwd, w, h);
-            double[] mt = project(gui, client, mTip, camPos, fwd, w, h);
-            if (mb != null && mt != null) {
-                line(gui, mb[0], mb[1], mt[0], mt[1], 3.0f, GIVER_COLOR);
-                fillCircle(gui, mt[0], mt[1], rScale * 0.7, GIVER_GLANS);
-            }
-        }
-
-        if (!mouthEnd) {
-            double ogdx = -dx;
-            double ogdz = -dz;
-            double thrustPh = Math.sin((now % 500) / 500.0 * Math.PI * 2);
-            double thrust = 0.28 + Math.max(0.0, thrustPh) * 0.14;
-            Vec3 aBase = new Vec3(feet.x + ogdx * 0.36, feet.y + 0.9, feet.z + ogdz * 0.36);
-            Vec3 aTip = new Vec3(feet.x + ogdx * (0.36 - thrust), feet.y + 1.02, feet.z + ogdz * (0.36 - thrust));
-            double[] ab = project(gui, client, aBase, camPos, fwd, w, h);
-            double[] at = project(gui, client, aTip, camPos, fwd, w, h);
-            if (ab != null && at != null) {
-                line(gui, ab[0], ab[1], at[0], at[1], 3.0f, GIVER_COLOR);
-                fillCircle(gui, at[0], at[1], rScale * 0.7, GIVER_GLANS);
-            }
+        double ogdx = -dx;
+        double ogdz = -dz;
+        double thrustPh = Math.sin((now % 500) / 500.0 * Math.PI * 2);
+        double thrust = 0.28 + Math.max(0.0, thrustPh) * 0.14;
+        Vec3 aBase = new Vec3(feet.x + ogdx * 0.36, feet.y + 0.9, feet.z + ogdz * 0.36);
+        Vec3 aTip = new Vec3(feet.x + ogdx * (0.36 - thrust), feet.y + 1.02, feet.z + ogdz * (0.36 - thrust));
+        double[] ab = project(gui, client, aBase, camPos, fwd, w, h);
+        double[] at = project(gui, client, aTip, camPos, fwd, w, h);
+        if (ab != null && at != null) {
+            line(gui, ab[0], ab[1], at[0], at[1], 3.0f, GIVER_COLOR);
+            fillCircle(gui, at[0], at[1], rScale * 0.7, GIVER_GLANS);
         }
 
         if (cumStartMs > 0) {

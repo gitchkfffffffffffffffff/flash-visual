@@ -21,6 +21,7 @@ public class WorldVisuals {
     public static boolean nameTag = false;
     public static boolean zhiguli = false;
     public static boolean zhiguliView = false;
+    public static boolean majorSuit = false;
 
     public static float hatScale = 1.0f;
     public static float circleRadius = 3.0f;
@@ -33,6 +34,11 @@ public class WorldVisuals {
     private static final int ZHIGULI_BODY = 0xFFE8C8A0;
     private static final int ZHIGULI_DARK = 0xFF2A333D;
     private static final int ZHIGULI_GLASS = 0xFF9FC6E8;
+    private static final int SUIT_GREEN = 0xFF4F6A2F;
+    private static final int SUIT_DARK = 0xFF2E3D1A;
+    private static final int SUIT_GOLD = 0xFFFFD24A;
+    private static final int SUIT_BELT = 0xFF3B2A1A;
+    private static final int SUIT_STAR = 0xFFFF3B30;
 
     public static void render(GuiGraphics gui, Minecraft client) {
         if (client.level == null || client.player == null) {
@@ -42,7 +48,7 @@ public class WorldVisuals {
         if (!cam.isInitialized()) {
             return;
         }
-        if (!(chinaHat || jumpCircle || tracers || tracersMobs || nameTag || zhiguli)) {
+        if (!(chinaHat || jumpCircle || tracers || tracersMobs || nameTag || zhiguli || majorSuit)) {
             return;
         }
 
@@ -73,6 +79,10 @@ public class WorldVisuals {
 
             if (chinaHat && isPlayer) {
                 renderHat(gui, client, e, head, camPos, fwd, w, h);
+            }
+
+            if (majorSuit && isPlayer) {
+                renderMajorSuit(gui, client, e, feet, head, camPos, fwd, w, h);
             }
 
             if (jumpCircle && isPlayer) {
@@ -153,6 +163,86 @@ public class WorldVisuals {
         line(gui, a[0], a[1], lt[0], lt[1], 2.0f, HAT_COLOR);
         line(gui, a[0], a[1], rt[0], rt[1], 2.0f, HAT_COLOR);
         line(gui, lt[0], lt[1], rt[0], rt[1], 2.0f, HAT_COLOR);
+    }
+
+    private static void renderMajorSuit(GuiGraphics gui, Minecraft client, Entity e, Vec3 feet, Vec3 head,
+                                        Vec3 camPos, Vector3fc fwd, int w, int h) {
+        double hgt = Math.max(0.5, e.getBbHeight());
+        Vec3 torso = new Vec3(feet.x, feet.y + hgt * 0.62, feet.z);
+        Vec3 toBody = torso.subtract(camPos);
+        if (toBody.lengthSqr() < 1.0E-4) {
+            return;
+        }
+        Vec3 right = toBody.normalize().cross(new Vec3(0, 1, 0));
+        if (right.lengthSqr() < 1.0E-6) {
+            return;
+        }
+        right = right.normalize();
+        double rx = right.x;
+        double rz = right.z;
+
+        double shY = feet.y + hgt * 0.8;
+        double waY = feet.y + hgt * 0.42;
+        double hiY = feet.y + hgt * 0.27;
+        double vx = torso.x;
+        double vz = torso.z;
+
+        double shW = 0.34;
+        double waW = 0.28;
+        double hiW = 0.26;
+
+        double[] shL = project(gui, client, new Vec3(vx - rx * shW, shY, vz - rz * shW), camPos, fwd, w, h);
+        double[] shR = project(gui, client, new Vec3(vx + rx * shW, shY, vz + rz * shW), camPos, fwd, w, h);
+        double[] waL = project(gui, client, new Vec3(vx - rx * waW, waY, vz - rz * waW), camPos, fwd, w, h);
+        double[] waR = project(gui, client, new Vec3(vx + rx * waW, waY, vz + rz * waW), camPos, fwd, w, h);
+        double[] hiL = project(gui, client, new Vec3(vx - rx * hiW, hiY, vz - rz * hiW), camPos, fwd, w, h);
+        double[] hiR = project(gui, client, new Vec3(vx + rx * hiW, hiY, vz + rz * hiW), camPos, fwd, w, h);
+        if (shL == null || shR == null || waL == null || waR == null || hiL == null || hiR == null) {
+            return;
+        }
+
+        double x0 = Math.min(Math.min(shL[0], waL[0]), hiL[0]);
+        double x1 = Math.max(Math.max(shR[0], waR[0]), hiR[0]);
+        double yTop = Math.min(shL[1], shR[1]);
+        double yBot = Math.max(hiL[1], hiR[1]);
+        gui.fill((int) x0, (int) yTop, (int) x1 + 1, (int) yBot + 1, SUIT_GREEN);
+        gui.renderOutline((int) x0, (int) yTop, (int) (x1 - x0) + 1, (int) (yBot - yTop) + 1, SUIT_DARK);
+
+        double dist = Math.max(1.0, feet.distanceTo(camPos));
+        double rScale = Math.max(1.2, Math.min(7.0, 10.0 / dist));
+
+        double neckX = (shL[0] + shR[0]) / 2.0;
+        double neckY = (shL[1] + shR[1]) / 2.0;
+        double chestY = (waL[1] + waR[1]) / 2.0;
+        double placketX = (waL[0] + waR[0]) / 2.0;
+        line(gui, neckX, neckY, placketX, chestY, 2.0f, SUIT_DARK);
+        fillCircle(gui, neckX, neckY, 1.4 * rScale, SUIT_DARK);
+        fillCircle(gui, placketX, chestY, 1.2 * rScale, SUIT_GOLD);
+        fillCircle(gui, placketX, (waL[1] + waR[1]) / 2.0 + (hiL[1] - waL[1]) * 0.4, 1.2 * rScale, SUIT_GOLD);
+
+        fillCircle(gui, shL[0], shL[1], 2.5 * rScale, SUIT_GOLD);
+        fillCircle(gui, shR[0], shR[1], 2.5 * rScale, SUIT_GOLD);
+        fillCircle(gui, shL[0], shL[1], 1.0 * rScale, SUIT_DARK);
+        fillCircle(gui, shR[0], shR[1], 1.0 * rScale, SUIT_DARK);
+
+        double beltY = (waL[1] + waR[1]) / 2.0 + (hiL[1] - waL[1]) * 0.5;
+        double bL = Math.min(waL[0], hiL[0]);
+        double bR = Math.max(waR[0], hiR[0]);
+        gui.fill((int) bL, (int) beltY, (int) bR + 1, (int) beltY + 4, SUIT_BELT);
+
+        double capY = head.y + hgt * 0.16;
+        double[] capC = project(gui, client, new Vec3(head.x, capY, head.z), camPos, fwd, w, h);
+        if (capC != null) {
+            double cr = 0.30 * rScale;
+            fillCircle(gui, capC[0], capC[1], 3.8 * rScale, SUIT_GREEN);
+            double[] bLp = project(gui, client, new Vec3(head.x - rx * 0.30, capY - 0.06, head.z - rz * 0.30), camPos, fwd, w, h);
+            double[] bRp = project(gui, client, new Vec3(head.x + rx * 0.30, capY - 0.06, head.z + rz * 0.30), camPos, fwd, w, h);
+            if (bLp != null && bRp != null) {
+                line(gui, bLp[0], bLp[1], bRp[0], bRp[1], 3.0f, SUIT_BELT);
+            }
+            line(gui, capC[0] - cr, capC[1], capC[0] + cr, capC[1], 1.6f, SUIT_GOLD);
+            fillCircle(gui, capC[0], capC[1] - 0.5, 1.0 * rScale, SUIT_STAR);
+        }
     }
 
     private static void renderZhiguli(GuiGraphics gui, Minecraft client, Vec3 feet, Vec3 camPos,

@@ -137,6 +137,7 @@ public class DupeGuiScreen extends Screen {
         ya = addVisToggle(xa, ya, colW, "Кит. шляпа", () -> WorldVisuals.chinaHat, () -> WorldVisuals.chinaHat = !WorldVisuals.chinaHat);
         ya = addVisToggle(xa, ya, colW, "Жигули", () -> WorldVisuals.zhiguli, () -> WorldVisuals.zhiguli = !WorldVisuals.zhiguli);
         yb = addVisToggle(xb, yb, colW, "Вид из салона", () -> WorldVisuals.zhiguliView, () -> WorldVisuals.zhiguliView = !WorldVisuals.zhiguliView);
+        ya = addVisToggle(xa, ya, colW, "Костюм майёра", () -> WorldVisuals.majorSuit, () -> WorldVisuals.majorSuit = !WorldVisuals.majorSuit);
         yb = addVisToggle(xb, yb, colW, "Скин iAMKNOW", () -> PlayerSkinMixin.enabled, () -> PlayerSkinMixin.enabled = !PlayerSkinMixin.enabled);
         yb = addVisToggle(xb, yb, colW, "Круг прыжка", () -> WorldVisuals.jumpCircle, () -> WorldVisuals.jumpCircle = !WorldVisuals.jumpCircle);
         ya = addVisToggle(xa, ya, colW, "Трассеры", () -> WorldVisuals.tracers, () -> WorldVisuals.tracers = !WorldVisuals.tracers);

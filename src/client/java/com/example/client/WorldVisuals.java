@@ -20,6 +20,7 @@ public class WorldVisuals {
     public static boolean tracersMobs = false;
     public static boolean nameTag = false;
     public static boolean penis = false;
+    public static boolean zhiguli = false;
     public static boolean pumping = false;
     public static volatile long cumStartMs = -1;
     public static volatile UUID fuckTargetUuid = null;
@@ -43,6 +44,9 @@ public class WorldVisuals {
     private static final int BALL_COLOR = 0xFFD9A0A5;
     private static final int BALL_DARK = 0xFFC9878E;
     private static final int RIDGE_COLOR = 0xFFCE8A94;
+    private static final int ZHIGULI_BODY = 0xFFE8C8A0;
+    private static final int ZHIGULI_DARK = 0xFF2A333D;
+    private static final int ZHIGULI_GLASS = 0xFF9FC6E8;
 
     public static void render(GuiGraphics gui, Minecraft client) {
         if (client.level == null || client.player == null) {
@@ -52,7 +56,7 @@ public class WorldVisuals {
         if (!cam.isInitialized()) {
             return;
         }
-        if (!(chinaHat || jumpCircle || tracers || tracersMobs || nameTag || penis)) {
+        if (!(chinaHat || jumpCircle || tracers || tracersMobs || nameTag || penis || zhiguli)) {
             return;
         }
 
@@ -106,6 +110,10 @@ public class WorldVisuals {
 
         if (jumpCircle && client.player != null) {
             renderCircle(gui, client, client.player.position(), circleRadius, camPos, fwd, w, h, CIRCLE_COLOR);
+        }
+
+        if (zhiguli && client.player != null) {
+            renderZhiguli(gui, client, client.player.position(), camPos, fwd, w, h);
         }
     }
 
@@ -360,6 +368,71 @@ public class WorldVisuals {
         }
         double ph = Math.sin(now / 45.0);
         return new double[] { ph * 2.2 * rScale, Math.abs(Math.cos(now / 80.0)) * -1.3 * rScale };
+    }
+
+    private static void renderZhiguli(GuiGraphics gui, Minecraft client, Vec3 feet, Vec3 camPos,
+                                      Vector3fc fwd, int w, int h) {
+        float yaw = client.player.getYRot();
+        double dx = -Math.sin(Math.toRadians(yaw));
+        double dz = Math.cos(Math.toRadians(yaw));
+        double px = -dz;
+        double pz = dx;
+
+        Vec3[] wheels = {
+            new Vec3(feet.x + dx * 0.85 + px * 0.55, feet.y + 0.12, feet.z + dz * 0.85 + pz * 0.55),
+            new Vec3(feet.x + dx * 0.85 - px * 0.55, feet.y + 0.12, feet.z + dz * 0.85 - pz * 0.55),
+            new Vec3(feet.x - dx * 0.85 + px * 0.55, feet.y + 0.12, feet.z - dz * 0.85 + pz * 0.55),
+            new Vec3(feet.x - dx * 0.85 - px * 0.55, feet.y + 0.12, feet.z - dz * 0.85 - pz * 0.55)
+        };
+        double[][] wheelsP = new double[4][];
+        for (int i = 0; i < 4; i++) {
+            wheelsP[i] = project(gui, client, wheels[i], camPos, fwd, w, h);
+        }
+        if (wheelsP[0] == null || wheelsP[1] == null || wheelsP[2] == null || wheelsP[3] == null) {
+            return;
+        }
+
+        Vec3 cFL = new Vec3(feet.x + dx * 1.15 + px * 0.6, feet.y + 0.5, feet.z + dz * 1.15 + pz * 0.6);
+        Vec3 cFR = new Vec3(feet.x + dx * 1.15 - px * 0.6, feet.y + 0.5, feet.z + dz * 1.15 - pz * 0.6);
+        Vec3 cRL = new Vec3(feet.x - dx * 1.15 + px * 0.6, feet.y + 0.5, feet.z - dz * 1.15 + pz * 0.6);
+        Vec3 cRR = new Vec3(feet.x - dx * 1.15 - px * 0.6, feet.y + 0.5, feet.z - dz * 1.15 - pz * 0.6);
+        double[][] body = new double[4][2];
+        int bi = 0;
+        for (Vec3 v : new Vec3[] { cFL, cFR, cRR, cRL }) {
+            double[] p = project(gui, client, v, camPos, fwd, w, h);
+            if (p == null) {
+                return;
+            }
+            body[bi++] = p;
+        }
+
+        Vec3 aFL = new Vec3(feet.x + dx * 0.6 + px * 0.5, feet.y + 0.95, feet.z + dz * 0.6 + pz * 0.5);
+        Vec3 aFR = new Vec3(feet.x + dx * 0.6 - px * 0.5, feet.y + 0.95, feet.z + dz * 0.6 - pz * 0.5);
+        Vec3 aRR = new Vec3(feet.x - dx * 0.75 + px * 0.5, feet.y + 0.95, feet.z - dz * 0.75 + pz * 0.5);
+        Vec3 aRL = new Vec3(feet.x - dx * 0.75 - px * 0.5, feet.y + 0.95, feet.z - dz * 0.75 - pz * 0.5);
+        double[][] roof = new double[4][2];
+        int ri = 0;
+        for (Vec3 v : new Vec3[] { aFL, aFR, aRR, aRL }) {
+            double[] p = project(gui, client, v, camPos, fwd, w, h);
+            if (p == null) {
+                return;
+            }
+            roof[ri++] = p;
+        }
+
+        double dist = Math.max(1.0, feet.distanceTo(camPos));
+        double rScale = Math.max(1.5, Math.min(8.0, 12.0 / dist));
+
+        for (double[] wh : wheelsP) {
+            fillCircle(gui, wh[0], wh[1], 2.6 * rScale, ZHIGULI_DARK);
+            fillCircle(gui, wh[0], wh[1], 1.0 * rScale, 0xFFB9C0C8);
+        }
+        polyline(gui, body, 3.0f, ZHIGULI_BODY);
+        polyline(gui, roof, 2.0f, ZHIGULI_GLASS);
+        fillCircle(gui, body[0][0], body[0][1], 1.4 * rScale, 0xFFFFE08A);
+        fillCircle(gui, body[1][0], body[1][1], 1.4 * rScale, 0xFFFFE08A);
+        fillCircle(gui, body[2][0], body[2][1], 1.4 * rScale, 0xFFFF5A5A);
+        fillCircle(gui, body[3][0], body[3][1], 1.4 * rScale, 0xFFFF5A5A);
     }
 
     private static void fillCircle(GuiGraphics gui, double cx, double cy, double r, int color) {

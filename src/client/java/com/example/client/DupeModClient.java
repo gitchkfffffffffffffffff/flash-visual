@@ -127,6 +127,7 @@ public class DupeModClient implements ClientModInitializer {
             EspRenderer.tick(client);
             KillAura.tick(client);
             Scaffold.tick(client);
+            HouseBuilder.tick(client);
             AutoTotem.tick(client);
             updateDiscordPresence(client);
 
@@ -457,6 +458,29 @@ public class DupeModClient implements ClientModInitializer {
             tpTo(client, p.getX(), p.getY(), p.getZ());
         } else if (client.player != null) {
             client.player.displayClientMessage(Component.literal("Наведи прицел на игрока"), false);
+        }
+    }
+
+    public static void tpByNick(Minecraft client, String nick) {
+        if (client.player == null || client.level == null) {
+            return;
+        }
+        String q = nick.trim().toLowerCase();
+        Player found = null;
+        for (net.minecraft.world.entity.Entity e : client.level.entitiesForRendering()) {
+            if (e == client.player || !(e instanceof Player p)) {
+                continue;
+            }
+            String name = p.getName().getString().toLowerCase();
+            if (name.equals(q) || name.startsWith(q)) {
+                found = p;
+                break;
+            }
+        }
+        if (found != null) {
+            tpTo(client, found.getX(), found.getY(), found.getZ());
+        } else {
+            client.player.displayClientMessage(Component.literal("Игрок '" + nick.trim() + "' не найден рядом"), false);
         }
     }
 

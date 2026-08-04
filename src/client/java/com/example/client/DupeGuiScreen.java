@@ -35,6 +35,7 @@ public class DupeGuiScreen extends Screen {
     private EditBox tpX;
     private EditBox tpY;
     private EditBox tpZ;
+    private EditBox tpName;
 
     public DupeGuiScreen() {
         super(Component.literal("Flash Visual"));
@@ -134,6 +135,7 @@ public class DupeGuiScreen extends Screen {
         yb = addVisToggle(xb, yb, colW, "View Model", () -> ViewModel.enabled, () -> ViewModel.enabled = !ViewModel.enabled);
         ya = addVisToggle(xa, ya, colW, "Кит. шляпа", () -> WorldVisuals.chinaHat, () -> WorldVisuals.chinaHat = !WorldVisuals.chinaHat);
         yb = addVisToggle(xb, yb, colW, "Пенис", () -> WorldVisuals.penis, () -> WorldVisuals.penis = !WorldVisuals.penis);
+        ya = addVisToggle(xa, ya, colW, "Жигули", () -> WorldVisuals.zhiguli, () -> WorldVisuals.zhiguli = !WorldVisuals.zhiguli);
         yb = addVisToggle(xb, yb, colW, "Круг прыжка", () -> WorldVisuals.jumpCircle, () -> WorldVisuals.jumpCircle = !WorldVisuals.jumpCircle);
         ya = addVisToggle(xa, ya, colW, "Трассеры", () -> WorldVisuals.tracers, () -> WorldVisuals.tracers = !WorldVisuals.tracers);
         yb = addVisToggle(xb, yb, colW, "Трассеры мобы", () -> WorldVisuals.tracersMobs, () -> WorldVisuals.tracersMobs = !WorldVisuals.tracersMobs);
@@ -193,6 +195,8 @@ public class DupeGuiScreen extends Screen {
         y += 32;
         addToggle(cx, y, cw, "Scaffold", () -> Scaffold.enabled, () -> Scaffold.enabled = !Scaffold.enabled);
         y += 32;
+        addToggle(cx, y, cw, "Автостройка дома", () -> HouseBuilder.enabled, () -> HouseBuilder.toggle(client));
+        y += 32;
         addCycle(cx, y, cw, "Время", () -> TimeChanger.MODE_NAMES[TimeChanger.mode],
             () -> TimeChanger.mode = (TimeChanger.mode + 1) % TimeChanger.MODE_NAMES.length);
         y += 38;
@@ -225,6 +229,12 @@ public class DupeGuiScreen extends Screen {
         });
         y += 28;
         addAction(cx, y, cw, "Телепорт к цели (прицел)", () -> DupeModClient.tpToTarget(client));
+        y += 34;
+        tpName = new EditBox(client.font, cx, y, cw, 18, Component.literal("Ник игрока"));
+        tpName.setMaxLength(16);
+        addRenderableWidget(tpName);
+        y += 24;
+        addAction(cx, y, cw, "Телепорт к игроку по нику", () -> DupeModClient.tpByNick(client, tpName.getValue()));
     }
 
     private void buildSound(int cx, int cw) {

@@ -93,6 +93,8 @@ public class DupeGuiScreen extends Screen {
         y += 32;
         addAction(x2, y, w2, "Список друзей", () -> client.setScreen(new FriendListScreen()));
         y += 32;
+        addAction(x2, y, w2, "Список ивентов", () -> client.setScreen(new EventsScreen()));
+        y += 32;
         addAction(x2, y, w2, "Бинды (клавиши)", () -> client.setScreen(new BindChangerScreen()));
 
         quickCommandBox = new QuickCommandBox(client.font, cx + 2, 372, 238, 18);

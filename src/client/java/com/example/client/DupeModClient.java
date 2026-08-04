@@ -62,6 +62,7 @@ public class DupeModClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         DiscordRpc.init();
+        AltManager.load(Minecraft.getInstance());
         HudRenderCallback.EVENT.register((gui, delta) ->
             HudRenderer.render(gui, delta, Minecraft.getInstance())
         );

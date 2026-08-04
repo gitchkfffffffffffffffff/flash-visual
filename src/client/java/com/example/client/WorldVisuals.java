@@ -17,6 +17,7 @@ public class WorldVisuals {
     public static boolean tracers = false;
     public static boolean tracersMobs = false;
     public static boolean nameTag = false;
+    public static boolean penis = false;
 
     public static float hatScale = 1.0f;
     public static float circleRadius = 3.0f;
@@ -26,6 +27,9 @@ public class WorldVisuals {
     private static final int CIRCLE_COLOR = 0xCCFFAA00;
     private static final int TRACER_COLOR = 0x88FFFFFF;
     private static final int MOB_COLOR = 0xCCFF5555;
+    private static final int PENIS_COLOR = 0xFFE9A0A5;
+    private static final int GLANS_COLOR = 0xFFD9778A;
+    private static final int BALL_COLOR = 0xFFD9A0A5;
 
     public static void render(GuiGraphics gui, Minecraft client) {
         if (client.level == null || client.player == null) {
@@ -35,7 +39,7 @@ public class WorldVisuals {
         if (!cam.isInitialized()) {
             return;
         }
-        if (!(chinaHat || jumpCircle || tracers || tracersMobs || nameTag)) {
+        if (!(chinaHat || jumpCircle || tracers || tracersMobs || nameTag || penis)) {
             return;
         }
 
@@ -66,6 +70,10 @@ public class WorldVisuals {
 
             if (chinaHat && isPlayer) {
                 renderHat(gui, client, e, head, camPos, fwd, w, h);
+            }
+
+            if (penis && isPlayer) {
+                renderPenis(gui, client, e, feet, camPos, fwd, w, h);
             }
 
             if (jumpCircle && isPlayer) {
@@ -142,6 +150,49 @@ public class WorldVisuals {
         line(gui, a[0], a[1], lt[0], lt[1], 2.0f, HAT_COLOR);
         line(gui, a[0], a[1], rt[0], rt[1], 2.0f, HAT_COLOR);
         line(gui, lt[0], lt[1], rt[0], rt[1], 2.0f, HAT_COLOR);
+    }
+
+    private static void renderPenis(GuiGraphics gui, Minecraft client, Entity e, Vec3 feet,
+                                    Vec3 camPos, Vector3fc fwd, int w, int h) {
+        float yaw = e.getYRot();
+        double dx = -Math.sin(Math.toRadians(yaw));
+        double dz = Math.cos(Math.toRadians(yaw));
+        double px = -dz;
+        double pz = dx;
+
+        Vec3 base = new Vec3(feet.x + dx * 0.12, feet.y + 0.32, feet.z + dz * 0.12);
+        Vec3 tip = new Vec3(feet.x + dx * 0.52, feet.y + 0.36, feet.z + dz * 0.52);
+        Vec3 ballL = new Vec3(feet.x + px * 0.07 - dx * 0.06, feet.y + 0.24, feet.z + pz * 0.07 - dz * 0.06);
+        Vec3 ballR = new Vec3(feet.x - px * 0.07 - dx * 0.06, feet.y + 0.24, feet.z - pz * 0.07 - dz * 0.06);
+
+        double[] b = project(gui, client, base, camPos, fwd, w, h);
+        double[] t = project(gui, client, tip, camPos, fwd, w, h);
+        double[] bl = project(gui, client, ballL, camPos, fwd, w, h);
+        double[] br = project(gui, client, ballR, camPos, fwd, w, h);
+        if (b == null || t == null || bl == null || br == null) {
+            return;
+        }
+
+        double dist = Math.max(1.0, feet.distanceTo(camPos));
+        double rScale = Math.max(1.5, Math.min(6.0, 9.0 / dist));
+
+        line(gui, b[0], b[1], t[0], t[1], 3.0f, PENIS_COLOR);
+        fillCircle(gui, t[0], t[1], rScale * 0.8, GLANS_COLOR);
+        fillCircle(gui, bl[0], bl[1], rScale * 0.6, BALL_COLOR);
+        fillCircle(gui, br[0], br[1], rScale * 0.6, BALL_COLOR);
+    }
+
+    private static void fillCircle(GuiGraphics gui, double cx, double cy, double r, int color) {
+        int ix = (int) Math.round(cx);
+        int iy = (int) Math.round(cy);
+        int ir = Math.max(1, (int) Math.ceil(r));
+        for (int yy = -ir; yy <= ir; yy++) {
+            for (int xx = -ir; xx <= ir; xx++) {
+                if (xx * xx + yy * yy <= ir * ir) {
+                    gui.fill(ix + xx, iy + yy, ix + xx + 1, iy + yy + 1, color);
+                }
+            }
+        }
     }
 
     private static void renderNameTag(GuiGraphics gui, Minecraft client, Player player, Vec3 head,

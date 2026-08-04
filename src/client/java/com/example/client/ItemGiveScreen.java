@@ -7,8 +7,12 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.TagParser;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -24,12 +28,14 @@ public class ItemGiveScreen extends Screen {
     private static final int COLS = 10;
     private static final int SLOT = 18;
     private static final int GRID_Y = 74;
+    private static final int SIDE_W = 230;
 
     private final Minecraft client = Minecraft.getInstance();
     private final List<ItemStack> allItems = new ArrayList<>();
     private List<ItemStack> filtered = new ArrayList<>();
     private EditBox searchBox;
     private EditBox countBox;
+    private EditBox nbtBox;
     private int scroll = 0;
     private ItemStack selected = null;
 
@@ -59,6 +65,17 @@ public class ItemGiveScreen extends Screen {
         countBox.setFilter(s -> s.matches("\\d*"));
         countBox.setValue("1");
         addRenderableWidget(countBox);
+
+        int rightX = width - SIDE_W - 22;
+        nbtBox = new EditBox(client.font, rightX + 10, 68, SIDE_W - 20, 18, Component.literal("NBT"));
+        nbtBox.setMaxLength(4096);
+        nbtBox.setValue("");
+        addRenderableWidget(nbtBox);
+        int midBtn = (SIDE_W - 24) / 2;
+        addRenderableWidget(new Ui.StyledButton(rightX + 10, 92, midBtn, 18, Component.literal("Применить"), Ui.ACCENT,
+            b -> applyNbt()));
+        addRenderableWidget(new Ui.StyledButton(rightX + 10 + midBtn + 4, 92, SIDE_W - 24 - midBtn, 18,
+            Component.literal("Сброс NBT"), 0xFF444444, b -> resetNbt()));
 
         int btnY = height - 44;
         addRenderableWidget(new Ui.StyledButton(cx - 250, btnY, 100, 20, Component.literal("Выдать"), Ui.GREEN,
@@ -114,6 +131,47 @@ public class ItemGiveScreen extends Screen {
             spawnStack(player.level(), player.getX(), player.getY() + 0.5, player.getZ(), stack);
         }
         player.displayClientMessage(Component.literal("Выдано: " + stack.getHoverName().getString() + " x" + stack.getCount()), false);
+    }
+
+    private void applyNbt() {
+        if (selected == null) {
+            message("Сначала выбери предмет");
+            return;
+        }
+        String s = nbtBox.getValue().trim();
+        try {
+            if (s.isEmpty()) {
+                selected.set(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
+                message("NBT сброшен");
+            } else {
+                CompoundTag tag = TagParser.parseCompoundFully(s);
+                selected.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+                message("NBT применён: " + selected.getHoverName().getString());
+            }
+        } catch (Exception ex) {
+            message("Ошибка NBT: " + ex.getMessage());
+        }
+    }
+
+    private void resetNbt() {
+        if (selected == null) {
+            message("Сначала выбери предмет");
+            return;
+        }
+        selected.set(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
+        nbtBox.setValue("");
+        message("NBT сброшен");
+    }
+
+    private static CompoundTag tagOf(ItemStack stack) {
+        CustomData cd = stack.get(DataComponents.CUSTOM_DATA);
+        return (cd == null || cd.isEmpty()) ? null : cd.copyTag();
+    }
+
+    private void message(String text) {
+        if (client.player != null) {
+            client.player.displayClientMessage(Component.literal(text), false);
+        }
     }
 
     private int parseCount() {
@@ -208,14 +266,51 @@ public class ItemGiveScreen extends Screen {
         }
 
         if (selected != null) {
-            Ui.panel(gui, 20, height - 74, 240, 26, Ui.PULSE_PANEL, Ui.PULSE_ACCENT);
-            String name = selected.getHoverName().getString();
-            String id = BuiltInRegistries.ITEM.getKey(selected.getItem()).toString();
-            gui.drawString(client.font, Component.literal(name), 26, height - 70, 0xFFFFFF);
-            gui.drawString(client.font, Component.literal(id), 26 + client.font.width(name) + 10, height - 70, 0xFF9A9A9A);
+            renderItemPanel(gui);
+        }
+
+        int rightX = width - SIDE_W - 22;
+        int rightY = 30;
+        int rightH = height - 90;
+        Ui.panel(gui, rightX, rightY, SIDE_W, rightH, Ui.PULSE_PANEL, 0xFF26304A);
+        gui.drawString(client.font, Component.literal("Редактор NBT"), rightX + 8, rightY + 4, Ui.PULSE_ACCENT);
+        gui.drawString(client.font, Component.literal("(" + (selected != null ? selected.getHoverName().getString() : "предмет не выбран") + ")"),
+            rightX + 8, rightY + 16, 0xFF9A9A9A);
+        if (selected != null) {
+            gui.drawString(client.font, Component.literal("NBT: " + (tagOf(selected) == null ? "нет" : tagOf(selected).size() + " тегов")),
+                rightX + 8, rightY + 52, 0xFF6A6A6A);
         }
 
         gui.drawString(client.font, Component.literal("Прокрутка колесом мыши · " + filtered.size() + " предметов"),
             gridX, gridBottom + 4, 0xFF6A6A6A);
+    }
+
+    private void renderItemPanel(GuiGraphics gui) {
+        int py = 30;
+        int panelH = height - 90;
+        Ui.panel(gui, 12, py, SIDE_W, panelH, Ui.PULSE_PANEL, 0xFF26304A);
+        gui.drawString(client.font, Component.literal("Предмет"), 20, py + 4, Ui.PULSE_ACCENT);
+
+        ItemStack stack = selected;
+        gui.fill(20, py + 20, 20 + 40, py + 20 + 40, 0x33000000);
+        gui.renderItem(stack, 21, py + 21);
+        gui.renderItemDecorations(client.font, stack, 21, py + 21);
+        gui.drawString(client.font, Component.literal(stack.getHoverName().getString()), 68, py + 24, 0xFFFFFF);
+        gui.drawString(client.font, Component.literal("x" + stack.getCount()), 68, py + 36, 0xFFFFAA00);
+
+        int ty = py + 68;
+        gui.drawString(client.font, Component.literal("ID: " + BuiltInRegistries.ITEM.getKey(stack.getItem())), 20, ty, 0xFF9A9A9A);
+        ty += 16;
+        gui.drawString(client.font, Component.literal("NBT (текущий):"), 20, ty, Ui.PULSE_ACCENT);
+        ty += 10;
+        CompoundTag tag = tagOf(stack);
+        String nbtStr = tag == null ? "(нет NBT)" : tag.toString();
+        for (var line : client.font.split(Component.literal(nbtStr), SIDE_W - 24)) {
+            gui.drawString(client.font, line, 20, ty, 0xFF9A9A9A);
+            ty += 9;
+            if (ty > py + panelH - 20) {
+                break;
+            }
+        }
     }
 }

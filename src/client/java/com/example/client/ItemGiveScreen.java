@@ -189,6 +189,11 @@ public class ItemGiveScreen extends Screen {
     }
 
     @Override
+    public void renderBackground(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
+        // без затемнения
+    }
+
+    @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean bl) {
         if (event.buttonInfo().button() == 0) {
             int idx = slotIndexAt((int) event.x(), (int) event.y());

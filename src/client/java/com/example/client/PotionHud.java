@@ -3,7 +3,9 @@ package com.example.client;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.effect.MobEffectInstance;
 
 import java.util.Collection;
@@ -35,13 +37,42 @@ public class PotionHud {
             }
             int ry = y + 4 + i * ROW_H;
             int color = e.getEffect().value().getColor() & 0xFFFFFF;
-            gui.fill(x + 4, ry, x + 7, ry + ROW_H - 2, 0xFF000000 | color);
+            gui.fill(x + 3, ry + 1, x + 18, ry + ROW_H - 1, 0xFF0B0F1A);
+            Identifier icon = effectSprite(e);
+            if (icon != null) {
+                try {
+                    gui.blitSprite(RenderPipelines.GUI_TEXTURED, icon, x + 3, ry + 1, 15, 15);
+                } catch (RuntimeException ex) {
+                    gui.fill(x + 4, ry + 2, x + 17, ry + 15, 0xFF000000 | color);
+                }
+            } else {
+                gui.fill(x + 4, ry + 2, x + 17, ry + 15, 0xFF000000 | color);
+            }
             String name = Component.translatable(e.getDescriptionId()).getString();
             String amp = amplifier(e.getAmplifier());
             String dur = duration(e);
-            gui.drawString(font, Component.literal(name + amp), x + 13, ry + 1, 0xFFFFFFFF);
-            gui.drawString(font, Component.literal(dur), x + W - font.width(dur) - 10, ry + 1, 0xFF9A9A9A);
+            gui.drawString(font, Component.literal(name + amp), x + 22, ry + 2, 0xFFFFFFFF);
+            gui.drawString(font, Component.literal(dur), x + W - font.width(dur) - 10, ry + 2, 0xFF9A9A9A);
             i++;
+        }
+    }
+
+    private static Identifier effectSprite(MobEffectInstance e) {
+        try {
+            String rn = e.getEffect().getRegisteredName();
+            String ns = "minecraft";
+            String path = rn;
+            int c = rn.indexOf(':');
+            if (c > 0) {
+                ns = rn.substring(0, c);
+                path = rn.substring(c + 1);
+            }
+            if (path.isEmpty()) {
+                return null;
+            }
+            return Identifier.fromNamespaceAndPath(ns, "effect/" + path);
+        } catch (RuntimeException ex) {
+            return null;
         }
     }
 

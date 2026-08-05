@@ -54,6 +54,15 @@ namespace FlashVisualLauncher
         private PulseButton btnModDelete;
         private readonly List<string> modFiles = new List<string>();
 
+        private ComboBox cmbAccount;
+        private ComboBox cmbVersion;
+        private readonly List<string> versions = new List<string>();
+        private readonly List<PulseButton> ramPresets = new List<PulseButton>();
+        private Label lblRamVal;
+        private ProgressBar progressBar;
+        private Label lblProgress;
+        private System.Windows.Forms.Timer progressTimer;
+
         private int nav = 0;
         private bool busy;
 
@@ -95,8 +104,50 @@ namespace FlashVisualLauncher
 
             switchPage(0);
             Core.SyncAltsToMod();
+            RefreshAccountCombo();
+            PopulateVersions();
             Append("Flash Visual launcher · " + Core.MOD_VERSION + " · Fabric 1.21.11");
             Append("Директория установки: " + Core.InstallDir());
+        }
+
+        private void RefreshAccountCombo()
+        {
+            if (cmbAccount == null) return;
+            cmbAccount.Items.Clear();
+            foreach (var a in Core.Config.Accounts)
+            {
+                cmbAccount.Items.Add(a.Name + (a.Type == "offline" ? " (offline)" : ""));
+            }
+            if (Core.Config.ActiveAccount >= 0 && Core.Config.ActiveAccount < cmbAccount.Items.Count)
+            {
+                cmbAccount.SelectedIndex = Core.Config.ActiveAccount;
+            }
+        }
+
+        private void PopulateVersions()
+        {
+            cmbVersion.Items.Clear();
+            cmbVersion.Items.Add(Core.MOD_VERSION);
+            cmbVersion.SelectedIndex = 0;
+            new System.Threading.Thread(() =>
+            {
+                try
+                {
+                    var list = Core.FetchVersions();
+                    if (IsHandleCreated)
+                    {
+                        BeginInvoke((Action)(() =>
+                        {
+                            cmbVersion.Items.Clear();
+                            foreach (var v in list) cmbVersion.Items.Add(v);
+                            string sel = Core.SelectedModVersion();
+                            int idx = cmbVersion.Items.IndexOf(sel);
+                            cmbVersion.SelectedIndex = idx < 0 ? 0 : idx;
+                        }));
+                    }
+                }
+                catch { }
+            }) { IsBackground = true }.Start();
         }
 
         private void BuildNav()
@@ -130,20 +181,71 @@ namespace FlashVisualLauncher
         {
             lblAccount = new Label
             {
-                Location = new Point(198, 268),
+                Location = new Point(198, 336),
                 Size = new Size(460, 26),
                 ForeColor = TEXT,
                 Text = ""
             };
             lblDir = new Label
             {
-                Location = new Point(198, 294),
+                Location = new Point(198, 362),
                 Size = new Size(700, 24),
                 ForeColor = SUB,
                 Text = ""
             };
             Controls.Add(lblAccount);
             Controls.Add(lblDir);
+
+            cmbAccount = new ComboBox
+            {
+                Location = new Point(198, 104),
+                Size = new Size(200, 26),
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                BackColor = Color.FromArgb(12, 20, 36),
+                ForeColor = TEXT,
+                FlatStyle = FlatStyle.Flat
+            };
+            cmbAccount.SelectedIndexChanged += (s, e) =>
+            {
+                int i = cmbAccount.SelectedIndex;
+                if (i >= 0 && i < Core.Config.Accounts.Count && i != Core.Config.ActiveAccount)
+                {
+                    Core.Config.ActiveAccount = i;
+                    Core.SaveConfig();
+                    Core.SyncAltsToMod();
+                    RefreshAccountList();
+                }
+            };
+
+            cmbVersion = new ComboBox
+            {
+                Location = new Point(406, 104),
+                Size = new Size(170, 26),
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                BackColor = Color.FromArgb(12, 20, 36),
+                ForeColor = TEXT,
+                FlatStyle = FlatStyle.Flat
+            };
+            cmbVersion.SelectedIndexChanged += (s, e) =>
+            {
+                string v = cmbVersion.SelectedItem as string;
+                if (v != null)
+                {
+                    Core.Config.SelectedVersion = v;
+                    Core.SaveConfig();
+                }
+            };
+
+            lblRamVal = new Label
+            {
+                Location = new Point(198, 268),
+                Size = new Size(220, 22),
+                ForeColor = ACCENT,
+                Font = new Font("Segoe UI", 10f, FontStyle.Bold),
+                Text = Core.Config.RamMb + " МБ"
+            };
+            Controls.Add(lblRamVal);
+            BuildRamPresets();
 
             btnPlay = new PulseButton
             {
@@ -169,8 +271,93 @@ namespace FlashVisualLauncher
             };
             btnDownload.Click += (s, e) => Run("установка", Core.DownloadGame, "Установка начата...");
 
+            Controls.Add(cmbAccount);
+            Controls.Add(cmbVersion);
             Controls.Add(btnPlay);
             Controls.Add(btnDownload);
+
+            BuildProgress();
+        }
+
+        private void BuildRamPresets()
+        {
+            var label = new Label
+            {
+                Text = "ПАМЯТЬ",
+                Location = new Point(198, 238),
+                AutoSize = true,
+                ForeColor = SUB,
+                Font = new Font("Segoe UI", 9f, FontStyle.Bold)
+            };
+            Controls.Add(label);
+            int x = 198;
+            int[] sizes = { 2048, 4096, 6144, 8192 };
+            string[] labels = { "2ГБ", "4ГБ", "6ГБ", "8ГБ" };
+            for (int i = 0; i < sizes.Length; i++)
+            {
+                int mb = sizes[i];
+                var b = new PulseButton
+                {
+                    Text = labels[i],
+                    Outline = true,
+                    ForeColor = TEXT,
+                    Location = new Point(x, 288),
+                    Size = new Size(64, 28),
+                    FlatStyle = FlatStyle.Flat,
+                    FlatAppearance = { BorderSize = 0 }
+                };
+                b.Click += (s, e) =>
+                {
+                    Core.Config.RamMb = mb;
+                    Core.SaveConfig();
+                    lblRamVal.Text = mb + " МБ";
+                    if (ramTrack != null) ramTrack.Value = mb;
+                };
+                Controls.Add(b);
+                ramPresets.Add(b);
+                x += 70;
+            }
+        }
+
+        private void BuildProgress()
+        {
+            lblProgress = new Label
+            {
+                Location = new Point(204, 406),
+                Size = new Size(ClientSize.Width - 224, 16),
+                ForeColor = ACCENT,
+                Font = new Font("Segoe UI", 9f, FontStyle.Bold),
+                Text = "",
+                Visible = false
+            };
+            progressBar = new ProgressBar
+            {
+                Minimum = 0,
+                Maximum = 100,
+                Style = ProgressBarStyle.Continuous,
+                Location = new Point(204, 423),
+                Size = new Size(ClientSize.Width - 224, 5),
+                Visible = false
+            };
+            Controls.Add(lblProgress);
+            Controls.Add(progressBar);
+            progressTimer = new System.Windows.Forms.Timer();
+            progressTimer.Interval = 150;
+            progressTimer.Tick += (s, e) =>
+            {
+                if (!busy)
+                {
+                    progressBar.Visible = false;
+                    lblProgress.Visible = false;
+                    return;
+                }
+                int v = (int)Math.Max(0, Math.Min(100, Core.Progress));
+                progressBar.Value = v;
+                lblProgress.Text = v + "%";
+                progressBar.Visible = true;
+                lblProgress.Visible = true;
+            };
+            progressTimer.Start();
         }
 
         private void BuildMods()
@@ -548,6 +735,10 @@ namespace FlashVisualLauncher
             lblDir.Visible = home;
             btnPlay.Visible = home;
             btnDownload.Visible = home;
+            cmbAccount.Visible = home;
+            cmbVersion.Visible = home;
+            lblRamVal.Visible = home;
+            foreach (var b in ramPresets) b.Visible = home;
             lblModStatus.Visible = mods;
             lstMods.Visible = mods;
             btnModRefresh.Visible = mods;
@@ -578,6 +769,7 @@ namespace FlashVisualLauncher
             var acc = Core.Active();
             lblAccount.Text = acc == null ? "Аккаунт: —" : "Аккаунт: " + acc.Name + "   [" + acc.Type + "]";
             lblDir.Text = "Установка: " + Core.InstallDir();
+            RefreshAccountCombo();
             int sel = lstAccounts.SelectedIndex;
             lstAccounts.Items.Clear();
             int i = 0;

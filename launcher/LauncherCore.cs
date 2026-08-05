@@ -25,6 +25,7 @@ namespace FlashVisualLauncher
         public string JavaPath = "";
         public int Width = 854;
         public int Height = 480;
+        public string SelectedVersion = "";
     }
 
     public static class Core
@@ -32,7 +33,8 @@ namespace FlashVisualLauncher
         public const string MC_VERSION = "1.21.11";
         public const string LOADER = "0.19.3";
         public const string MOD_VERSION = "1.1.0-pre1";
-        public const string ModJar = "flash-visual-" + MOD_VERSION + ".jar";
+
+        public static double Progress = 0;
 
         public static LConfig Config = new LConfig();
         public static string ConfigPath = Path.Combine(AppContext.BaseDirectory, "launcher.json");
@@ -56,6 +58,7 @@ namespace FlashVisualLauncher
                 if (src.ContainsKey("Width")) Config.Width = Convert.ToInt32(src["Width"]);
                 if (src.ContainsKey("Height")) Config.Height = Convert.ToInt32(src["Height"]);
                 if (src.ContainsKey("ActiveAccount")) Config.ActiveAccount = Convert.ToInt32(src["ActiveAccount"]);
+                if (src.ContainsKey("SelectedVersion")) Config.SelectedVersion = (string)src["SelectedVersion"];
                 if (src.ContainsKey("Accounts"))
                 {
                     foreach (object o in (object[])src["Accounts"])
@@ -89,7 +92,8 @@ namespace FlashVisualLauncher
                     { "RamMb", Config.RamMb },
                     { "JavaPath", Config.JavaPath },
                     { "Width", Config.Width },
-                    { "Height", Config.Height }
+                    { "Height", Config.Height },
+                    { "SelectedVersion", Config.SelectedVersion }
                 };
                 File.WriteAllText(ConfigPath, new JavaScriptSerializer().Serialize(d), Encoding.UTF8);
             }
@@ -351,7 +355,8 @@ namespace FlashVisualLauncher
                     TryDownload("https://resources.download.minecraft.net/" + sub + "/" + hash, local);
                 }
                 n++;
-                if (n % 300 == 0) log("Ассеты: " + n + " / " + total);
+                if (n % 100 == 0) log("Ассеты: " + n + " / " + total);
+                Progress = 50 + (n / (double)total) * 38.0;
             }
             log("Ассеты готовы (" + total + ").");
         }
@@ -377,21 +382,65 @@ namespace FlashVisualLauncher
             log("Fabric API установлен.");
         }
 
-public const string MOD_URL = "https://github.com/gitchkfffffffffffffffff/flash-visual/releases/download/prerelis/" + ModJar;
+        public static string SelectedModVersion()
+        {
+            string v = Config.SelectedVersion;
+            return string.IsNullOrEmpty(v) ? MOD_VERSION : v;
+        }
+
+        public static string ModJarName(string version)
+        {
+            return "flash-visual-" + version + ".jar";
+        }
+
+        public static List<string> FetchVersions()
+        {
+            var list = new List<string>();
+            try
+            {
+                var arr = GetJsonArray("https://api.github.com/repos/gitchkfffffffffffffffff/flash-visual/releases");
+                foreach (object o in arr)
+                {
+                    var rel = (Dictionary<string, object>)o;
+                    if (!rel.ContainsKey("assets")) continue;
+                    foreach (object a in (object[])rel["assets"])
+                    {
+                        var fd = (Dictionary<string, object>)a;
+                        string name = (string)fd["name"];
+                        if (name == null || !name.StartsWith("flash-visual-") || !name.EndsWith(".jar")) continue;
+                        string v = name.Substring("flash-visual-".Length);
+                        v = v.Substring(0, v.Length - ".jar".Length);
+                        if (!list.Contains(v)) list.Add(v);
+                    }
+                }
+            }
+            catch { }
+            if (list.Count == 0) list.Add(MOD_VERSION);
+            list.Sort(StringComparer.Ordinal);
+            return list;
+        }
+
+        public static string ModUrl(string version)
+        {
+            return "https://github.com/gitchkfffffffffffffffff/flash-visual/releases/download/prerelis/"
+                + ModJarName(version);
+        }
 
         static void InstallModJar(string dir, Action<string> log)
         {
-            string local = Path.Combine(dir, "mods", ModJar);
+            string version = SelectedModVersion();
+            string jarName = ModJarName(version);
+            string local = Path.Combine(dir, "mods", jarName);
             if (File.Exists(local) && new FileInfo(local).Length > 0)
             {
-                log("Мод уже установлен: " + ModJar);
+                log("Мод уже установлен: " + jarName);
                 return;
             }
             try
             {
-                log("Скачиваю мод Flash Visual с GitHub...");
-                DownloadUrl(MOD_URL, local);
-                log("Мод установлен: " + ModJar);
+                log("Скачиваю мод Flash Visual " + version + " с GitHub...");
+                DownloadUrl(ModUrl(version), local);
+                log("Мод установлен: " + jarName);
                 return;
             }
             catch (Exception ex)
@@ -400,15 +449,15 @@ public const string MOD_URL = "https://github.com/gitchkfffffffffffffffff/flash-
             }
             string[] candidates =
             {
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ModJar),
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "build", "libs", ModJar),
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, jarName),
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "build", "libs", jarName),
                 Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "build", "libs", "flash-visual-1.0.0.jar")
             };
             string src = null;
             foreach (var c in candidates) if (File.Exists(c)) { src = c; break; }
             if (src == null)
             {
-                log("Мод не найден — скопируйте flash-visual-" + MOD_VERSION + ".jar рядом с лаунчером.");
+                log("Мод не найден — скопируйте " + jarName + " рядом с лаунчером.");
                 return;
             }
             File.Copy(src, local, true);
@@ -433,6 +482,7 @@ public const string MOD_URL = "https://github.com/gitchkfffffffffffffffff/flash-
                     log("Установка в: " + dir);
 
                     log("Загружаю версии...");
+                    Progress = 5;
                     var man = GetJson("https://launchermeta.mojang.com/mc/game/version_manifest_v2.json");
                     string vUrl = null;
                     foreach (var v in (object[])man["versions"])
@@ -446,12 +496,14 @@ public const string MOD_URL = "https://github.com/gitchkfffffffffffffffff/flash-
                         "https://meta.fabricmc.net/v2/versions/loader/{0}/{1}/profile/json", MC_VERSION, LOADER));
 
                     log("Загружаю библиотеки...");
+                    Progress = 20;
                     var vLibs = ResolveLibraries(vanilla);
                     var fLibs = ResolveLibraries(fabric);
                     log("Библиотек: " + (vLibs.Classpath.Count + fLibs.Classpath.Count) +
                         " обычных, " + (vLibs.Natives.Count + fLibs.Natives.Count) + " нативных");
 
                     string jar = Path.Combine(dir, "versions", MC_VERSION, MC_VERSION + ".jar");
+                    Progress = 40;
                     if (!File.Exists(jar) || new FileInfo(jar).Length == 0)
                     {
                         log("Загружаю client.jar...");
@@ -461,6 +513,7 @@ public const string MOD_URL = "https://github.com/gitchkfffffffffffffffff/flash-
 
                     string indexId = (string)((Dictionary<string, object>)vanilla["assetIndex"])["id"];
                     string indexLocal = Path.Combine(dir, "assets", "indexes", indexId + ".json");
+                    Progress = 48;
                     if (!File.Exists(indexLocal))
                     {
                         log("Загружаю индексы ассетов...");
@@ -471,9 +524,13 @@ public const string MOD_URL = "https://github.com/gitchkfffffffffffffffff/flash-
                     var idx = ParseJson(File.ReadAllText(indexLocal, Encoding.UTF8));
                     DownloadAssets((Dictionary<string, object>)idx["objects"], dir, log);
 
+                    Progress = 90;
                     InstallFabricApi(dir, log);
+
+                    Progress = 95;
                     InstallModJar(dir, log);
 
+                    Progress = 100;
                     done("Установка завершена. Можно запускать.");
                 }
                 catch (Exception ex)
@@ -504,6 +561,7 @@ public const string MOD_URL = "https://github.com/gitchkfffffffffffffffff/flash-
                     }
 
                     log("Поиск версии...");
+                    Progress = 5;
                     var man = GetJson("https://launchermeta.mojang.com/mc/game/version_manifest_v2.json");
                     string vUrl = null;
                     foreach (var v in (object[])man["versions"])
@@ -516,6 +574,7 @@ public const string MOD_URL = "https://github.com/gitchkfffffffffffffffff/flash-
                         "https://meta.fabricmc.net/v2/versions/loader/{0}/{1}/profile/json", MC_VERSION, LOADER));
 
                     log("Проверяю библиотеки...");
+                    Progress = 25;
                     var vLibs = ResolveLibraries(vanilla);
                     var fLibs = ResolveLibraries(fabric);
 
@@ -528,6 +587,7 @@ public const string MOD_URL = "https://github.com/gitchkfffffffffffffffff/flash-
 
                     string idxId = (string)((Dictionary<string, object>)vanilla["assetIndex"])["id"];
                     string idxLocal = Path.Combine(dir, "assets", "indexes", idxId + ".json");
+                    Progress = 40;
                     if (File.Exists(idxLocal))
                     {
                         log("Проверяю ассеты...");
@@ -536,6 +596,7 @@ public const string MOD_URL = "https://github.com/gitchkfffffffffffffffff/flash-
                     }
 
                     log("Готовлю нативные библиотеки...");
+                    Progress = 60;
                     string nativesDir = Path.Combine(dir, "bin", "natives-" + MC_VERSION);
                     foreach (var nz in vLibs.Natives) ExtractZip(nz, nativesDir);
                     foreach (var nz in fLibs.Natives) ExtractZip(nz, nativesDir);
@@ -564,6 +625,7 @@ public const string MOD_URL = "https://github.com/gitchkfffffffffffffffff/flash-
                         " -Dorg.lwjgl.util.StaticallyLinked=true" +
                         " -Dorg.lwjgl.system.SharedLibrarySeparator=false";
 
+                    Progress = 85;
                     log("Запуск клиента...");
                     var psi = new ProcessStartInfo
                     {
@@ -574,6 +636,7 @@ public const string MOD_URL = "https://github.com/gitchkfffffffffffffffff/flash-
                         UseShellExecute = false
                     };
                     var p = Process.Start(psi);
+                    Progress = 100;
                     done("Игра запущена (pid " + p.Id + "). Мод Flash Visual активен.");
                 }
                 catch (Exception ex)

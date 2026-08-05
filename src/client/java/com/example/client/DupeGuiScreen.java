@@ -143,6 +143,10 @@ public class DupeGuiScreen extends Screen {
         ya = addVisToggle(xa, ya, colW, "Жигули", () -> WorldVisuals.zhiguli, () -> WorldVisuals.zhiguli = !WorldVisuals.zhiguli);
         yb = addVisToggle(xb, yb, colW, "Вид из салона", () -> WorldVisuals.zhiguliView, () -> WorldVisuals.zhiguliView = !WorldVisuals.zhiguliView);
         ya = addVisToggle(xa, ya, colW, "Костюм майёра", () -> WorldVisuals.majorSuit, () -> WorldVisuals.majorSuit = !WorldVisuals.majorSuit);
+        yb = addVisToggle(xb, yb, colW, "Чёрный HUD", () -> Features.darkHud, () -> Features.darkHud = !Features.darkHud);
+        ya = addVisToggle(xa, ya, colW, "Item Physics", () -> Features.itemPhysics, () -> Features.itemPhysics = !Features.itemPhysics);
+        yb = addVisToggle(xb, yb, colW, "Zoom", () -> Zoom.enabled, () -> Zoom.enabled = !Zoom.enabled);
+        addAction(xa, 150, colW, "  Fake Player (P)", () -> FakePlayer.toggle(Minecraft.getInstance()));
         yb = addVisToggle(xb, yb, colW, "Скин iAMKNOW", () -> WorldVisuals.skinOverride, () -> WorldVisuals.skinOverride = !WorldVisuals.skinOverride);
         yb = addVisToggle(xb, yb, colW, "Круг прыжка", () -> WorldVisuals.jumpCircle, () -> WorldVisuals.jumpCircle = !WorldVisuals.jumpCircle);
         ya = addVisToggle(xa, ya, colW, "Трассеры", () -> WorldVisuals.tracers, () -> WorldVisuals.tracers = !WorldVisuals.tracers);

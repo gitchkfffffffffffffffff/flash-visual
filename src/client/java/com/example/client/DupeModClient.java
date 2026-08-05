@@ -36,6 +36,8 @@ import java.util.List;
 public class DupeModClient implements ClientModInitializer {
     private static boolean wasShiftDown = false;
     private static boolean wasHKeyDown = false;
+    private static boolean wasPKeyDown = false;
+    private static boolean wasUKeyDown = false;
     private static boolean wasF6Down = false;
     private static boolean wasF7Down = false;
     private static boolean wasF8Down = false;
@@ -118,6 +120,19 @@ public class DupeModClient implements ClientModInitializer {
                 toggleGhostBlocks(client);
             }
             wasHKeyDown = isHKeyDown;
+
+            boolean isPKeyDown = GLFW.glfwGetKey(handle, Binds.get(Binds.FAKE)) == GLFW.GLFW_PRESS;
+            if (inGame && isPKeyDown && !wasPKeyDown) {
+                FakePlayer.toggle(client);
+            }
+            wasPKeyDown = isPKeyDown;
+
+            boolean isUKeyDown = GLFW.glfwGetKey(handle, Binds.get(Binds.SAFE)) == GLFW.GLFW_PRESS;
+            if (inGame && isUKeyDown && !wasUKeyDown) {
+                SafeMode.apply(client);
+                message(client, "SAFE MODE ON");
+            }
+            wasUKeyDown = isUKeyDown;
 
             HudRenderer.tick(client);
             HudRenderer.updateInteraction(client);

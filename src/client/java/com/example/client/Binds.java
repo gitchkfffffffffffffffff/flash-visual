@@ -22,6 +22,9 @@ public class Binds {
     public static final String WITHDRAW = "withdraw";
     public static final String DEPOSIT = "deposit";
     public static final String AUTO_TOTEM = "autoTotem";
+    public static final String ZOOM = "zoom";
+    public static final String FAKE = "fake";
+    public static final String SAFE = "safe";
 
     private static final LinkedHashMap<String, String> LABELS = new LinkedHashMap<>();
     private static final LinkedHashMap<String, Integer> BINDS = new LinkedHashMap<>();
@@ -47,6 +50,9 @@ public class Binds {
         register(WITHDRAW, "Забрать всё", GLFW.GLFW_KEY_Z);
         register(DEPOSIT, "Положить всё", GLFW.GLFW_KEY_X);
         register(AUTO_TOTEM, "Auto Totem", GLFW.GLFW_KEY_V);
+        register(ZOOM, "Zoom", GLFW.GLFW_KEY_C);
+        register(FAKE, "Fake Player", GLFW.GLFW_KEY_P);
+        register(SAFE, "Safe Mode", GLFW.GLFW_KEY_U);
     }
 
     private static void register(String id, String label, int key) {

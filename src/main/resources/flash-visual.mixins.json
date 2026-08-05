@@ -14,7 +14,15 @@
 		"LevelMixin",
 		"TitleScreenMixin",
 		"ItemInHandRendererMixin",
-		"PlayerSkinMixin"
+		"PlayerSkinMixin",
+		"ButtonsMixin",
+		"LogoRendererMixin",
+		"ScoreboardMixin",
+		"MouseHandlerMixin",
+		"CameraMixin",
+		"GuiHudMixin",
+		"ItemEntityMixin",
+		"GameRendererMixin"
 	],
 	"injectors": {
 		"defaultRequire": 0

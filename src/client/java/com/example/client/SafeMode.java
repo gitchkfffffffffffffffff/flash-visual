@@ -25,6 +25,7 @@ public class SafeMode {
         WorldVisuals.tracers = false;
         WorldVisuals.tracersMobs = false;
         WorldVisuals.nameTag = false;
+        WorldVisuals.enemyLabels = false;
         WorldVisuals.zhiguli = false;
         WorldVisuals.zhiguliView = false;
         WorldVisuals.majorSuit = false;
@@ -36,6 +37,7 @@ public class SafeMode {
         HudRenderer.fpsEnabled = false;
         HudRenderer.inventoryEnabled = false;
         HudRenderer.potionEnabled = false;
+        HudRenderer.enemiesEnabled = false;
         Minimap.enabled = false;
         StaffHud.enabled = false;
         CoordinatesHud.enabled = false;

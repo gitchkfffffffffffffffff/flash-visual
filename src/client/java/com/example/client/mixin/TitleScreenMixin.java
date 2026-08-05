@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(TitleScreen.class)
-public class TitleScreenMixin {
+public abstract class TitleScreenMixin {
     private static final int P = 56;
     private static final float[] PX = new float[P];
     private static final float[] PY = new float[P];
@@ -21,6 +21,11 @@ public class TitleScreenMixin {
     private static final float[] PH = new float[P];
     private static final int[] PT = new int[P];
     private static boolean inited = false;
+
+    @org.spongepowered.asm.mixin.gen.Invoker("addRenderableWidget")
+    protected abstract <T extends net.minecraft.client.gui.components.events.GuiEventListener
+        & net.minecraft.client.gui.components.Renderable & net.minecraft.client.gui.narration.NarratableEntry>
+        T invokeAddRenderableWidget(T widget);
 
     @Inject(method = "init", at = @At("TAIL"))
     private void flashVisual$layout(CallbackInfo ci) {
@@ -34,10 +39,15 @@ public class TitleScreenMixin {
                 list.add(aw);
             }
         }
+        int y = 70;
         for (net.minecraft.client.gui.components.AbstractWidget aw : list) {
             aw.setX(24);
             aw.setWidth(180);
+            aw.setY(y);
+            y += 24;
         }
+        invokeAddRenderableWidget(new Ui.StyledButton(24, y + 4, 180, 20, Component.literal("Альт менеджер"),
+            Ui.PULSE_ACCENT, b -> Minecraft.getInstance().setScreen(new com.example.client.AltManagerScreen())));
     }
 
     @Inject(method = "renderBackground(Lnet/minecraft/client/gui/GuiGraphics;IIF)V",

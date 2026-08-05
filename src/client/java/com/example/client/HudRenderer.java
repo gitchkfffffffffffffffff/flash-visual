@@ -7,9 +7,14 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.EntityHitResult;
 import org.lwjgl.glfw.GLFW;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 public class HudRenderer {
     public static boolean musicEnabled = true;
@@ -18,6 +23,7 @@ public class HudRenderer {
     public static boolean fpsEnabled = true;
     public static boolean inventoryEnabled = false;
     public static boolean potionEnabled = true;
+    public static boolean enemiesEnabled = true;
     private static String currentMusic = null;
     private static int musicTick = 0;
     private static int hudTick = 0;
@@ -30,6 +36,25 @@ public class HudRenderer {
     private static boolean hoverNext = false;
     private static boolean wasLeftDown = false;
 
+    private static final class EnemyRow {
+        final String name;
+        final float hp;
+        final float max;
+        final double dist;
+        final boolean mob;
+
+        EnemyRow(String name, float hp, float max, double dist, boolean mob) {
+            this.name = name;
+            this.hp = hp;
+            this.max = max;
+            this.dist = dist;
+            this.mob = mob;
+        }
+    }
+
+    private static final List<EnemyRow> enemyCache = new ArrayList<>();
+    private static int enemyTick = 0;
+
     public static void tick(Minecraft client) {
         hudTick++;
         if (musicEnabled) {
@@ -38,6 +63,46 @@ public class HudRenderer {
                 musicTick = 0;
                 currentMusic = WinMusicReader.getNowPlaying();
             }
+        }
+        if (enemiesEnabled) {
+            enemyTick++;
+            if (enemyTick >= 5) {
+                enemyTick = 0;
+                rebuildEnemies(client);
+            }
+        }
+    }
+
+    private static void rebuildEnemies(Minecraft client) {
+        enemyCache.clear();
+        if (client.level == null || client.player == null) {
+            return;
+        }
+        List<EnemyRow> tmp = new ArrayList<>();
+        double rangeSq = 128.0 * 128.0;
+        for (net.minecraft.world.entity.Entity e : client.level.entitiesForRendering()) {
+            if (e == client.player || e.isRemoved()) {
+                continue;
+            }
+            if (e.distanceToSqr(client.player) > rangeSq) {
+                continue;
+            }
+            if (e instanceof Player p) {
+                if (Friends.contains(p.getName().getString())) {
+                    continue;
+                }
+                String nm = p.getName().getString();
+                tmp.add(new EnemyRow(nm, p.getHealth(), Math.max(1, p.getMaxHealth()),
+                    Math.sqrt(e.distanceToSqr(client.player)), false));
+            } else if (e instanceof Monster mo) {
+                tmp.add(new EnemyRow(mo.getType().getDescription().getString(), mo.getHealth(),
+                    Math.max(1, mo.getMaxHealth()), Math.sqrt(e.distanceToSqr(client.player)), true));
+            }
+        }
+        tmp.sort(Comparator.comparingDouble(r -> r.dist));
+        int keep = Math.min(tmp.size(), 10);
+        for (int i = 0; i < keep; i++) {
+            enemyCache.add(tmp.get(i));
         }
     }
 
@@ -77,8 +142,50 @@ public class HudRenderer {
         if (fpsEnabled) {
             renderFps(gui, client);
         }
+        if (enemiesEnabled) {
+            renderEnemies(gui, client);
+        }
         WorldVisuals.render(gui, client);
         HudDrag.endFrame(client);
+    }
+
+    private static void renderEnemies(GuiGraphics gui, Minecraft client) {
+        if (enemyCache.isEmpty()) {
+            return;
+        }
+        Font font = client.font;
+        int w = 140;
+        int rowH = 16;
+        int headH = 11;
+        int n = enemyCache.size();
+        int panelH = headH + n * rowH + 2;
+        int[] pos = HudPos.get("enemies", gui.guiWidth() - w - 6, gui.guiHeight() / 2 - panelH / 2);
+        int x = pos[0];
+        int y = pos[1];
+        Ui.panel(gui, x, y, w, panelH, 0xC00B0F1A, 0xFF1E2A3E);
+        HudDrag.setArea("enemies", x, y, w, panelH);
+        String head = "ВРАГИ (" + n + ")";
+        int hw = font.width(head);
+        gui.fill(x, y, x + w, y + 1, Ui.PULSE_ACCENT);
+        gui.drawString(font, Component.literal(head), x + (w - hw) / 2, y + 2, Ui.PULSE_ACCENT);
+
+        int ry = y + headH;
+        for (EnemyRow r : enemyCache) {
+            int nameCol = r.mob ? 0xFF9A6E6E : 0xFFFFD24A;
+            gui.drawString(font, Component.literal(r.name), x + 5, ry, nameCol);
+            String ds = String.format("%.0fm", r.dist);
+            gui.drawString(font, Component.literal(ds), x + w - font.width(ds) - 4, ry, 0xFF9A9A9A);
+            int barX = x + 5;
+            int barY = ry + 8;
+            int barW = w - 10;
+            float frac = Math.min(1.0f, r.hp / r.max);
+            gui.fill(barX, barY, barX + barW, barY + 1, 0x40202020);
+            if (frac > 0) {
+                int hc = frac > 0.5f ? Ui.GREEN : (frac > 0.2f ? 0xFFFFAA00 : Ui.RED);
+                gui.fill(barX, barY, barX + (int) (barW * frac), barY + 1, hc);
+            }
+            ry += rowH;
+        }
     }
 
     private static void renderFps(GuiGraphics gui, Minecraft client) {

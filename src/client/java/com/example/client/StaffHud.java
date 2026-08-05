@@ -16,15 +16,24 @@ public class StaffHud {
     public static boolean enabled = false;
     public static final Set<String> STAFF = new HashSet<>();
 
+    private static long cacheUntil = 0;
+    private static final List<PlayerInfo> cached = new ArrayList<>();
+
     public static void render(GuiGraphics gui, Minecraft client) {
         if (!enabled || client.getConnection() == null) {
             return;
         }
-        List<PlayerInfo> players = new ArrayList<>(client.getConnection().getOnlinePlayers());
+        long now = System.currentTimeMillis();
+        if (now > cacheUntil || cached.isEmpty()) {
+            cacheUntil = now + 250;
+            cached.clear();
+            cached.addAll(client.getConnection().getOnlinePlayers());
+            cached.sort(Comparator.comparing(p -> p.getProfile().name()));
+        }
+        List<PlayerInfo> players = cached;
         if (players.isEmpty()) {
             return;
         }
-        players.sort(Comparator.comparing(p -> p.getProfile().name()));
         Font font = client.font;
 
         int w = 160;

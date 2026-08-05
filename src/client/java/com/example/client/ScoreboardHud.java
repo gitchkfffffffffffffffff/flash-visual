@@ -23,6 +23,13 @@ public class ScoreboardHud {
     private static int grabDY = 0;
     private static boolean active = false;
 
+    private static long cacheUntil = 0;
+    private static String cachedTitle = "";
+    private static int cachedTitleW = 0;
+    private static int cachedTextW = 0;
+    private static final List<String> cachedNames = new ArrayList<>();
+    private static final List<String> cachedNums = new ArrayList<>();
+
     public static void render(GuiGraphics gui, Minecraft client) {
         Player player = client.player;
         if (player == null) {
@@ -35,35 +42,44 @@ public class ScoreboardHud {
         }
         Font font = client.font;
 
-        String title = obj.getDisplayName().getString();
-        List<PlayerScoreEntry> all = new ArrayList<>(sb.listPlayerScores(obj));
-        all.sort(Comparator.comparingInt(PlayerScoreEntry::value));
-        List<PlayerScoreEntry> rows = new ArrayList<>();
-        for (int i = all.size() - 1; i >= 0 && rows.size() < 15; i--) {
-            PlayerScoreEntry e = all.get(i);
-            if (!e.isHidden()) {
-                rows.add(e);
+        long now = System.currentTimeMillis();
+        if (now > cacheUntil) {
+            cacheUntil = now + 250;
+            cachedNames.clear();
+            cachedNums.clear();
+            cachedTitle = obj.getDisplayName().getString();
+            List<PlayerScoreEntry> all = new ArrayList<>(sb.listPlayerScores(obj));
+            all.sort(Comparator.comparingInt(PlayerScoreEntry::value));
+            List<PlayerScoreEntry> rows = new ArrayList<>();
+            for (int i = all.size() - 1; i >= 0 && rows.size() < 15; i--) {
+                PlayerScoreEntry e = all.get(i);
+                if (!e.isHidden()) {
+                    rows.add(e);
+                }
+            }
+            cachedTitleW = font.width(cachedTitle);
+            cachedTextW = cachedTitleW;
+            for (PlayerScoreEntry e : rows) {
+                String n = e.ownerName().getString();
+                String v = e.formatValue(obj.numberFormat()).getString();
+                cachedNames.add(n);
+                cachedNums.add(v);
+                int rowW = font.width(n) + font.width(v);
+                if (rowW > cachedTextW) {
+                    cachedTextW = rowW;
+                }
             }
         }
 
-        int titleW = font.width(title);
-        int textW = titleW;
-        List<String> names = new ArrayList<>();
-        List<String> nums = new ArrayList<>();
-        for (PlayerScoreEntry e : rows) {
-            String n = e.ownerName().getString();
-            String v = e.formatValue(obj.numberFormat()).getString();
-            names.add(n);
-            nums.add(v);
-            int rowW = font.width(n) + font.width(v);
-            if (rowW > textW) {
-                textW = rowW;
-            }
-        }
+        String title = cachedTitle;
+        int titleW = cachedTitleW;
+        int textW = cachedTextW;
+        List<String> names = cachedNames;
+        List<String> nums = cachedNums;
         int padX = 6;
         int panelW = textW + padX * 2 + 8;
         int rowH = 9;
-        int panelH = rowH * rows.size() + 14 + 2;
+        int panelH = rowH * names.size() + 14 + 2;
 
         int sw = client.getWindow().getGuiScaledWidth();
         int[] pos = HudPos.get("scoreboard", sw - panelW - 4, 2);

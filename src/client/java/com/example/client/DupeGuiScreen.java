@@ -152,6 +152,8 @@ public class DupeGuiScreen extends Screen {
         ya = addVisToggle(xa, ya, colW, "Трассеры", () -> WorldVisuals.tracers, () -> WorldVisuals.tracers = !WorldVisuals.tracers);
         yb = addVisToggle(xb, yb, colW, "Трассеры мобы", () -> WorldVisuals.tracersMobs, () -> WorldVisuals.tracersMobs = !WorldVisuals.tracersMobs);
         ya = addVisToggle(xa, ya, colW, "Ники над головой", () -> WorldVisuals.nameTag, () -> WorldVisuals.nameTag = !WorldVisuals.nameTag);
+        yb = addVisToggle(xb, yb, colW, "Метки врагов", () -> WorldVisuals.enemyLabels, () -> WorldVisuals.enemyLabels = !WorldVisuals.enemyLabels);
+        ya = addVisToggle(xa, ya, colW, "Враги (HUD)", () -> HudRenderer.enemiesEnabled, () -> HudRenderer.enemiesEnabled = !HudRenderer.enemiesEnabled);
         ya = addVisSlider(xa, ya, colW, "Шляпа размер", 0.5f, 2.0f, () -> WorldVisuals.hatScale, v -> WorldVisuals.hatScale = (float) v, f -> String.format("%.1f", f));
         yb = addVisSlider(xb, yb, colW, "Круг радиус", 1.0f, 6.0f, () -> WorldVisuals.circleRadius, v -> WorldVisuals.circleRadius = (float) v, f -> String.format("%.1f", f));
         ya = addVisSlider(xa, ya, colW, "VM X", -1.0f, 1.0f, () -> ViewModel.posX, v -> ViewModel.posX = (float) v, f -> String.format("%.2f", f));

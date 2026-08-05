@@ -19,6 +19,7 @@ public class WorldVisuals {
     public static boolean tracers = false;
     public static boolean tracersMobs = false;
     public static boolean nameTag = false;
+    public static boolean enemyLabels = true;
     public static boolean zhiguli = false;
     public static boolean zhiguliView = false;
     public static boolean majorSuit = false;
@@ -78,11 +79,20 @@ public class WorldVisuals {
             if (!isPlayer && !isMob) {
                 continue;
             }
+            boolean isFriend = isPlayer && Friends.contains(((Player) e).getName().getString());
 
             double topY = e.getY() + e.getBbHeight();
 
             Vec3 head = new Vec3(e.getX(), topY, e.getZ());
             Vec3 feet = e.position();
+
+            if (nameTag && isPlayer) {
+                renderNameTag(gui, client, e, head, camPos, fwd, w, h);
+            }
+
+            if (enemyLabels && (isMob || (isPlayer && !isFriend))) {
+                renderEnemyLabel(gui, client, e, head, camPos, fwd, w, h);
+            }
 
             if (chinaHat && isPlayer) {
                 renderHat(gui, client, e, head, camPos, fwd, w, h);
@@ -137,7 +147,9 @@ public class WorldVisuals {
             if (e.distanceToSqr(client.player) > rangeSq) {
                 continue;
             }
-            double[] p = project(gui, client, e.position().add(0, e.getBbHeight() * 0.8, 0), camPos, fwd, w, h);
+            Vec3 pos = e.position();
+            double[] p = project(gui, client,
+                new Vec3(pos.x, pos.y + e.getBbHeight() * 0.8, pos.z), camPos, fwd, w, h);
             if (p == null) {
                 continue;
             }
@@ -457,7 +469,7 @@ public class WorldVisuals {
         }
     }
 
-    private static void renderNameTag(GuiGraphics gui, Minecraft client, Player player, Vec3 head,
+    private static void renderNameTag(GuiGraphics gui, Minecraft client, Entity e, Vec3 head,
                                       Vec3 camPos, Vector3fc fwd, int w, int h) {
         Vec3 labelPos = new Vec3(head.x, head.y + 0.3, head.z);
         double[] p = project(gui, client, labelPos, camPos, fwd, w, h);
@@ -466,8 +478,8 @@ public class WorldVisuals {
         }
         int x = (int) p[0];
         int y = (int) p[1];
-        String name = player.getName().getString();
-        int hp = (int) Math.ceil(player.getHealth());
+        String name = e.getName().getString();
+        int hp = (int) Math.ceil(((LivingEntity) e).getHealth());
         String text = name + " " + hp;
         int tw = client.font.width(text);
         gui.fill(x - tw / 2 - 3, y - 10, x + tw / 2 + 3, y + 2, 0xA0121212);
@@ -475,10 +487,50 @@ public class WorldVisuals {
         gui.drawCenteredString(client.font, Component.literal(text), x, y - 8, 0xFFFFFFFF);
     }
 
+    private static void renderEnemyLabel(GuiGraphics gui, Minecraft client, Entity e, Vec3 head,
+                                         Vec3 camPos, Vector3fc fwd, int w, int h) {
+        Vec3 labelPos = new Vec3(head.x, head.y + 0.35, head.z);
+        double[] p = project(gui, client, labelPos, camPos, fwd, w, h);
+        if (p == null) {
+            return;
+        }
+        int x = (int) p[0];
+        int y = (int) p[1];
+        boolean mob = e instanceof Monster;
+        String name = mob ? e.getType().getDescription().getString() : ((Player) e).getName().getString();
+        double dist = Math.sqrt(e.distanceToSqr(client.player));
+        float hp = ((LivingEntity) e).getHealth();
+        float maxHp = Math.max(1.0f, ((LivingEntity) e).getMaxHealth());
+
+        int accent = mob ? 0xFFFF5555 : 0xFFB44AFF;
+        int tw = client.font.width(name);
+        int barW = Math.max(28, tw + 6);
+        int bw = barW + 12;
+        int hgt = 14;
+        int px = x - bw / 2;
+        int py = y - hgt;
+        if (px < 0) px = 0;
+        if (py < 0) py = 0;
+
+        gui.fill(px, py, px + bw, py + hgt, 0xB0121212);
+        gui.fill(px, py, px + bw, py + 1, accent);
+        gui.drawString(client.font, Component.literal(name), px + 4, py + 3, 0xFFFFFFFF);
+        String ds = String.format("%.0fm", dist);
+        gui.drawString(client.font, Component.literal(ds), px + bw - client.font.width(ds) - 4, py + 3, 0xFF7A7A7A);
+
+        int barX = px + 3;
+        int barY = py + hgt - 3;
+        int fillW = (int) (barW * Math.min(1.0, hp / maxHp));
+        gui.fill(barX, barY, barX + barW, barY + 1, 0xFF3A3A3A);
+        int hc = hp / maxHp > 0.5 ? Ui.GREEN : (hp / maxHp > 0.2 ? 0xFFFFAA00 : Ui.RED);
+        if (fillW > 0) {
+            gui.fill(barX, barY, barX + fillW, barY + 1, hc);
+        }
+    }
+
     private static double[] project(GuiGraphics gui, Minecraft client, Vec3 world, Vec3 camPos,
                                     Vector3fc fwd, int w, int h) {
-        Vec3 d = world.subtract(camPos);
-        double f = d.x * fwd.x() + d.y * fwd.y() + d.z * fwd.z();
+        double f = (world.x - camPos.x) * fwd.x() + (world.y - camPos.y) * fwd.y() + (world.z - camPos.z) * fwd.z();
         if (f <= 0.05) {
             return null;
         }

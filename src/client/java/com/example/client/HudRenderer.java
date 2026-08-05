@@ -368,8 +368,11 @@ public class HudRenderer {
         panelW = w;
         panelH = panelH;
 
-        Ui.panel(gui, x, y, w, panelH, Ui.PANEL, playing ? Ui.ACCENT : 0xFF444444);
+        Ui.panel(gui, x, y, w, panelH, Ui.PANEL, Ui.PULSE_LINE);
         HudDrag.setArea("music", x, y, w, 11);
+        if (playing) {
+            Ui.roundRect(gui, x, y, 2, panelH, 1, Ui.PULSE_ACCENT);
+        }
 
         drawCover(gui, covX, covY, cov, playing, smtcAlive ? SmtcReader.appId() : null);
 
@@ -395,7 +398,7 @@ public class HudRenderer {
         gui.fill(x + 7, barY, x + 7 + bw, barY + 3, 0x22FFFFFF);
         if (playing && dur > 0 && pos >= 0) {
             int fill = (int) (bw * Math.min(1.0, (double) pos / dur));
-            gui.fill(x + 7, barY, x + 7 + fill, barY + 3, Ui.ACCENT);
+            Ui.roundRect(gui, x + 7, barY, Math.max(1, fill), 3, 1, Ui.PULSE_ACCENT);
             String t = fmt(pos) + " / " + fmt(dur);
             gui.drawString(font, Component.literal(t), x + 7, barY - 9, 0xFF9A9A9A);
         }
@@ -410,11 +413,11 @@ public class HudRenderer {
 
     private static void drawCover(GuiGraphics gui, int x, int y, int size, boolean playing, String appId) {
         if (playing) {
-            gui.fillGradient(x, y, x + size, y + size, 0xFF2A2A3A, 0xFF000000);
+            gui.fillGradient(x, y, x + size, y + size, 0xFF2A2A2A, 0xFF080808);
         } else {
             gui.fill(x, y, x + size, y + size, 0x44000000);
         }
-        gui.renderOutline(x, y, size, size, playing ? 0xFFFFAA00 : 0xFF444444);
+        gui.renderOutline(x, y, size, size, playing ? 0xFF9A9A9A : 0xFF3A3A3A);
         Font font = Minecraft.getInstance().font;
         int cy = y + size / 2 - 4;
         if (playing) {
@@ -472,8 +475,8 @@ public class HudRenderer {
     }
 
     private static void drawMediaButton(GuiGraphics gui, Font font, String glyph, int bx, int by, boolean hover) {
-        gui.fill(bx, by, bx + BTN_SIZE, by + BTN_SIZE, hover ? 0x55333333 : 0x44111111);
-        gui.renderOutline(bx, by, BTN_SIZE, BTN_SIZE, hover ? 0xFFFFAA00 : 0xFF555555);
+        int bg = hover ? 0x55FFFFFF : 0x22111111;
+        Ui.roundRect(gui, bx, by, BTN_SIZE, BTN_SIZE, 4, bg);
         gui.drawCenteredString(font, glyph, bx + BTN_SIZE / 2, by + (BTN_SIZE - 8) / 2,
             hover ? 0xFFFFFFFF : 0xFFCCCCCC);
     }

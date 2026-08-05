@@ -1,10 +1,11 @@
 package com.example.client;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
+import java.nio.file.Files;
 
 public class SmtcReader {
     private static final String SCRIPT = """
@@ -98,32 +99,31 @@ public class SmtcReader {
     }
 
     private static void run() {
-        while (!Thread.currentThread().isInterrupted()) {
-            try {
-                if (!runOnce()) {
-                    Thread.sleep(2000);
-                }
-            } catch (Throwable ignored) {
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                    return;
-                }
-            }
-        }
-        alive = false;
-    }
-
-    private static boolean runOnce() {
-        Process p = null;
+        File scriptFile = null;
         try {
-            p = new ProcessBuilder("powershell.exe", "-NoLogo", "-NoProfile", "-NonInteractive",
-                "-ExecutionPolicy", "Bypass", "-Command", SCRIPT)
-                .redirectErrorStream(true)
-                .start();
+            scriptFile = File.createTempFile("flash-smtc", ".ps1");
+            Files.write(scriptFile.toPath(), SCRIPT.getBytes(StandardCharsets.UTF_8));
+        } catch (Throwable t) {
+            alive = false;
+            return;
+        }
+        try {
+            ProcessBuilder pb = new ProcessBuilder("powershell.exe", "-Sta", "-NoLogo", "-NoProfile",
+                "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", scriptFile.getAbsolutePath());
+            Process p = pb.start();
             OutputStreamWriter out = new OutputStreamWriter(p.getOutputStream(), StandardCharsets.UTF_8);
             BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8));
-            while (!p.isAlive() || in.ready()) {
+            BufferedReader err = new BufferedReader(new InputStreamReader(p.getErrorStream(), StandardCharsets.UTF_8));
+            Thread errDrain = new Thread(() -> {
+                try {
+                    while (err.readLine() != null) {
+                    }
+                } catch (Throwable ignored) {
+                }
+            }, "Flash-SMTC-err");
+            errDrain.setDaemon(true);
+            errDrain.start();
+            while (!Thread.currentThread().isInterrupted()) {
                 try {
                     out.write("GET\n");
                     out.flush();
@@ -133,19 +133,24 @@ public class SmtcReader {
                     }
                     parse(line);
                     alive = true;
-                    Thread.sleep(500);
+                    Thread.sleep(750);
                 } catch (Exception e) {
                     break;
                 }
             }
             alive = false;
-            return false;
+            try {
+                out.write("QUIT\n");
+                out.flush();
+            } catch (Throwable ignored) {
+            }
+            p.destroy();
         } catch (Throwable ignored) {
             alive = false;
-            return false;
         } finally {
-            if (p != null) {
-                p.destroy();
+            try {
+                Files.deleteIfExists(scriptFile.toPath());
+            } catch (Throwable ignored) {
             }
         }
     }

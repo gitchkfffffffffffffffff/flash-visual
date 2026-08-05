@@ -33,9 +33,9 @@ public class WorldVisuals {
     public static float circleRadius = 3.0f;
 
     private static final double RANGE = 64.0;
-    private static final int HAT_COLOR = 0xFFFF5555;
-    private static final int HAT_FILL = 0xCCFF7A4D;
-    private static final int HAT_BRIM = 0xFFFF8A5A;
+    private static final int HAT_COLOR = 0xFFFFFFFF;
+    private static final int HAT_FILL = 0xCCFFFFFF;
+    private static final int HAT_BRIM = 0xFFFFFFFF;
     private static final int CIRCLE_COLOR = 0xCCFFAA00;
     private static final int TRACER_COLOR = 0x88FFFFFF;
     private static final int MOB_COLOR = 0xCCFF5555;

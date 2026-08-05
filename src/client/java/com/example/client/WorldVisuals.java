@@ -96,7 +96,7 @@ public class WorldVisuals {
                 renderEnemyLabel(gui, client, e, head, camPos, fwd, w, h);
             }
 
-            if (chinaHat && isPlayer) {
+            if (chinaHat && isPlayer && client.player != null && e == client.player) {
                 renderHat(gui, client, e, head, camPos, fwd, w, h);
             }
 

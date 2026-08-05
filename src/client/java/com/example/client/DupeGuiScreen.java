@@ -130,6 +130,7 @@ public class DupeGuiScreen extends Screen {
             }
         });
         yb = addVisToggle(xb, yb, colW, "Красивое меню", () -> Features.beautifulMenu, () -> Features.beautifulMenu = !Features.beautifulMenu);
+        ya = addVisToggle(xa, ya, colW, "Scoreboard тема", () -> Features.scoreboardTheme, () -> Features.scoreboardTheme = !Features.scoreboardTheme);
         ya = addVisToggle(xa, ya, colW, "Inventory HUD", () -> HudRenderer.inventoryEnabled, () -> HudRenderer.inventoryEnabled = !HudRenderer.inventoryEnabled);
         yb = addVisToggle(xb, yb, colW, "Potion GUI", () -> HudRenderer.potionEnabled, () -> HudRenderer.potionEnabled = !HudRenderer.potionEnabled);
         ya = addVisToggle(xa, ya, colW, "Staff List", () -> StaffHud.enabled, () -> StaffHud.enabled = !StaffHud.enabled);

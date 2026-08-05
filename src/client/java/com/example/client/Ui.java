@@ -20,10 +20,10 @@ public class Ui {
     public static final int CYAN = 0xFF00D0FF;
     public static final int PURPLE = 0xFFB44AFF;
 
-    public static int PULSE_BG = 0xFF0A0E18;
-    public static int PULSE_PANEL = 0xC00B0F1A;
+    public static int PULSE_BG = 0xFF000000;
+    public static int PULSE_PANEL = 0xC0000000;
     public static int PULSE_ACCENT = 0xFF00CFFF;
-    public static int PULSE_LINE = 0xFF1E2A3E;
+    public static int PULSE_LINE = 0xFF22242A;
 
     public static void applyAccent(int accent) {
         PULSE_ACCENT = accent;

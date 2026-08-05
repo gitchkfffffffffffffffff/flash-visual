@@ -13,6 +13,7 @@ public class Features {
     public static boolean showInvis = false;
     public static boolean darkMenu = false;
     public static boolean beautifulMenu = true;
+    public static boolean scoreboardTheme = true;
 
     public static final float[][] FOG_COLORS = {
         {0.42f, 0.20f, 0.85f},

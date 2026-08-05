@@ -6,6 +6,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.TitleScreen;
+import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -20,6 +21,24 @@ public class TitleScreenMixin {
     private static final float[] PH = new float[P];
     private static final int[] PT = new int[P];
     private static boolean inited = false;
+
+    @Inject(method = "init", at = @At("TAIL"))
+    private void flashVisual$layout(CallbackInfo ci) {
+        if (!Features.beautifulMenu) {
+            return;
+        }
+        net.minecraft.client.gui.screens.Screen self = (net.minecraft.client.gui.screens.Screen) (Object) this;
+        java.util.List<net.minecraft.client.gui.components.AbstractWidget> list = new java.util.ArrayList<>();
+        for (Object o : self.children()) {
+            if (o instanceof net.minecraft.client.gui.components.AbstractWidget aw) {
+                list.add(aw);
+            }
+        }
+        for (net.minecraft.client.gui.components.AbstractWidget aw : list) {
+            aw.setX(24);
+            aw.setWidth(180);
+        }
+    }
 
     @Inject(method = "renderBackground(Lnet/minecraft/client/gui/GuiGraphics;IIF)V",
         at = @At("HEAD"), cancellable = true)
@@ -78,6 +97,17 @@ public class TitleScreenMixin {
 
         drawParticles(gui, w, h, t);
         drawVignette(gui, w, h);
+
+        String nick = com.example.client.AltManager.getActive();
+        if (nick == null || nick.isEmpty()) {
+            nick = Minecraft.getInstance().getUser().getName();
+        }
+        if (nick != null && !nick.isEmpty()) {
+            int nx = 14;
+            int ny = 14;
+            Ui.panel(gui, nx - 6, ny - 3, font.width(nick) + 12, 12, 0xAA0B0F1A, accentCol);
+            gui.drawString(font, Component.literal(nick), nx, ny, 0xFFFFFFFF);
+        }
     }
 
     private static void drawParticles(GuiGraphics gui, int w, int h, long t) {

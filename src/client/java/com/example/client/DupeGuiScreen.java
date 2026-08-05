@@ -91,6 +91,23 @@ public class DupeGuiScreen extends Screen {
         y += 32;
         addToggle(x2, y, w2, "Auto Totem", () -> AutoTotem.enabled, () -> AutoTotem.enabled = !AutoTotem.enabled);
         y += 32;
+        addToggle(x2, y, w2, "Fly", () -> CheatModules.Fly.enabled, () -> {
+            CheatModules.Fly.enabled = !CheatModules.Fly.enabled;
+            if (!CheatModules.Fly.enabled) {
+                CheatModules.Fly.disable(client);
+            }
+        });
+        y += 32;
+        addToggle(x2, y, w2, "Speed", () -> CheatModules.Speed.enabled, () -> CheatModules.Speed.enabled = !CheatModules.Speed.enabled);
+        y += 32;
+        addToggle(x2, y, w2, "Spider", () -> CheatModules.Spider.enabled, () -> CheatModules.Spider.enabled = !CheatModules.Spider.enabled);
+        y += 32;
+        addToggle(x2, y, w2, "AirJump", () -> CheatModules.AirJump.enabled, () -> CheatModules.AirJump.enabled = !CheatModules.AirJump.enabled);
+        y += 32;
+        addToggle(x2, y, w2, "NoFall", () -> CheatModules.NoFall.enabled, () -> CheatModules.NoFall.enabled = !CheatModules.NoFall.enabled);
+        y += 32;
+        addToggle(x2, y, w2, "ChestStealer", () -> CheatModules.ChestStealer.enabled, () -> CheatModules.ChestStealer.enabled = !CheatModules.ChestStealer.enabled);
+        y += 32;
         addAction(x2, y, w2, "Список друзей", () -> client.setScreen(new FriendListScreen()));
         y += 32;
         addAction(x2, y, w2, "Список ивентов", () -> client.setScreen(new EventsScreen()));

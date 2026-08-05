@@ -54,6 +54,12 @@ public class DupeModClient implements ClientModInitializer {
     private static boolean wasZDown = false;
     private static boolean wasXDown = false;
     private static boolean wasVDown = false;
+    private static boolean wasFlyDown = false;
+    private static boolean wasSpeedDown = false;
+    private static boolean wasSpiderDown = false;
+    private static boolean wasAirJumpDown = false;
+    private static boolean wasNoFallDown = false;
+    private static boolean wasChestStealDown = false;
     private static boolean ghostBlockActive = false;
     private static BlockPos lastGhostBlockPos = null;
     private static boolean pendingChestOpen = false;
@@ -82,6 +88,7 @@ public class DupeModClient implements ClientModInitializer {
             KillAura.enabled = false;
             Scaffold.enabled = false;
             AutoTotem.enabled = false;
+            CheatModules.disableAll(client);
         });
 
         ClientSendMessageEvents.ALLOW_CHAT.register(message -> {
@@ -256,6 +263,55 @@ public class DupeModClient implements ClientModInitializer {
                 message(client, "Auto Totem " + (AutoTotem.enabled ? "ON" : "OFF"));
             }
             wasVDown = isVDown;
+
+            boolean isFlyDown = GLFW.glfwGetKey(handle, Binds.get(Binds.FLY)) == GLFW.GLFW_PRESS;
+            if (inGame && isFlyDown && !wasFlyDown) {
+                CheatModules.Fly.enabled = !CheatModules.Fly.enabled;
+                if (!CheatModules.Fly.enabled) {
+                    CheatModules.Fly.disable(client);
+                }
+                message(client, "Fly " + (CheatModules.Fly.enabled ? "ON" : "OFF"));
+            }
+            wasFlyDown = isFlyDown;
+
+            boolean isSpeedDown = GLFW.glfwGetKey(handle, Binds.get(Binds.SPEED)) == GLFW.GLFW_PRESS;
+            if (inGame && isSpeedDown && !wasSpeedDown) {
+                CheatModules.Speed.enabled = !CheatModules.Speed.enabled;
+                message(client, "Speed " + (CheatModules.Speed.enabled ? "ON" : "OFF"));
+            }
+            wasSpeedDown = isSpeedDown;
+
+            boolean isSpiderDown = GLFW.glfwGetKey(handle, Binds.get(Binds.SPIDER)) == GLFW.GLFW_PRESS;
+            if (inGame && isSpiderDown && !wasSpiderDown) {
+                CheatModules.Spider.enabled = !CheatModules.Spider.enabled;
+                message(client, "Spider " + (CheatModules.Spider.enabled ? "ON" : "OFF"));
+            }
+            wasSpiderDown = isSpiderDown;
+
+            boolean isAirJumpDown = GLFW.glfwGetKey(handle, Binds.get(Binds.AIRJUMP)) == GLFW.GLFW_PRESS;
+            if (inGame && isAirJumpDown && !wasAirJumpDown) {
+                CheatModules.AirJump.enabled = !CheatModules.AirJump.enabled;
+                message(client, "AirJump " + (CheatModules.AirJump.enabled ? "ON" : "OFF"));
+            }
+            wasAirJumpDown = isAirJumpDown;
+
+            boolean isNoFallDown = GLFW.glfwGetKey(handle, Binds.get(Binds.NOFALL)) == GLFW.GLFW_PRESS;
+            if (inGame && isNoFallDown && !wasNoFallDown) {
+                CheatModules.NoFall.enabled = !CheatModules.NoFall.enabled;
+                message(client, "NoFall " + (CheatModules.NoFall.enabled ? "ON" : "OFF"));
+            }
+            wasNoFallDown = isNoFallDown;
+
+            boolean isChestStealDown = GLFW.glfwGetKey(handle, Binds.get(Binds.CHEST_STEAL)) == GLFW.GLFW_PRESS;
+            if (inGame && isChestStealDown && !wasChestStealDown) {
+                CheatModules.ChestStealer.enabled = !CheatModules.ChestStealer.enabled;
+                message(client, "ChestStealer " + (CheatModules.ChestStealer.enabled ? "ON" : "OFF"));
+            }
+            wasChestStealDown = isChestStealDown;
+
+            if (client.player != null) {
+                CheatModules.updateAll(client);
+            }
 
             if (ghostBlockActive && client.player != null && client.level != null) {
                 BlockPos below = client.player.blockPosition().below();

@@ -55,6 +55,7 @@ public class SafeMode {
         if (FakePlayer.active()) {
             FakePlayer.despawn(client);
         }
+        CheatModules.disableAll(client);
         DupeModClient.disableGhostBlocks(client);
     }
 }

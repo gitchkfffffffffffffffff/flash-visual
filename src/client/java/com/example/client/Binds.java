@@ -25,6 +25,12 @@ public class Binds {
     public static final String ZOOM = "zoom";
     public static final String FAKE = "fake";
     public static final String SAFE = "safe";
+    public static final String FLY = "fly";
+    public static final String SPEED = "speed";
+    public static final String SPIDER = "spider";
+    public static final String AIRJUMP = "airJump";
+    public static final String NOFALL = "noFall";
+    public static final String CHEST_STEAL = "chestSteal";
 
     private static final LinkedHashMap<String, String> LABELS = new LinkedHashMap<>();
     private static final LinkedHashMap<String, Integer> BINDS = new LinkedHashMap<>();
@@ -53,6 +59,12 @@ public class Binds {
         register(ZOOM, "Zoom", GLFW.GLFW_KEY_C);
         register(FAKE, "Fake Player", GLFW.GLFW_KEY_P);
         register(SAFE, "Safe Mode", GLFW.GLFW_KEY_U);
+        register(FLY, "Fly", GLFW.GLFW_KEY_F);
+        register(SPEED, "Speed", GLFW.GLFW_KEY_T);
+        register(SPIDER, "Spider", GLFW.GLFW_KEY_J);
+        register(AIRJUMP, "AirJump", GLFW.GLFW_KEY_N);
+        register(NOFALL, "NoFall", GLFW.GLFW_KEY_L);
+        register(CHEST_STEAL, "ChestStealer", GLFW.GLFW_KEY_Y);
     }
 
     private static void register(String id, String label, int key) {

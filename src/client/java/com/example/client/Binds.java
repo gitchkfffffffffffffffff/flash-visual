@@ -31,6 +31,7 @@ public class Binds {
     public static final String AIRJUMP = "airJump";
     public static final String NOFALL = "noFall";
     public static final String CHEST_STEAL = "chestSteal";
+    public static final String QUICK_SAVE = "quickSave";
 
     private static final LinkedHashMap<String, String> LABELS = new LinkedHashMap<>();
     private static final LinkedHashMap<String, Integer> BINDS = new LinkedHashMap<>();
@@ -65,6 +66,7 @@ public class Binds {
         register(AIRJUMP, "AirJump", GLFW.GLFW_KEY_N);
         register(NOFALL, "NoFall", GLFW.GLFW_KEY_L);
         register(CHEST_STEAL, "ChestStealer", GLFW.GLFW_KEY_Y);
+        register(QUICK_SAVE, "Быстрое сохранение мира", GLFW.GLFW_KEY_F2);
     }
 
     private static void register(String id, String label, int key) {

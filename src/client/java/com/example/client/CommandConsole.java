@@ -321,6 +321,10 @@ public class CommandConsole extends Screen {
                 Config.load();
                 log("OK: конфиг загружен");
             }
+            case "save" -> {
+                DupeModClient.quickSave(client);
+                log("OK: запрошено быстрое сохранение");
+            }
             default -> {
                 if (client.getConnection() == null) {
                     log("err: нет соединения");

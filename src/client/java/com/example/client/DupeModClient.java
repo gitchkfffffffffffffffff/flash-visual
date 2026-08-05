@@ -12,6 +12,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.server.IntegratedServer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
@@ -61,6 +62,7 @@ public class DupeModClient implements ClientModInitializer {
     private static boolean wasAirJumpDown = false;
     private static boolean wasNoFallDown = false;
     private static boolean wasChestStealDown = false;
+    private static boolean wasQuickSaveDown = false;
     private static boolean ghostBlockActive = false;
     private static BlockPos lastGhostBlockPos = null;
     private static boolean pendingChestOpen = false;
@@ -320,6 +322,12 @@ public class DupeModClient implements ClientModInitializer {
             }
             wasChestStealDown = isChestStealDown;
 
+            boolean isQuickSaveDown = GLFW.glfwGetKey(handle, Binds.get(Binds.QUICK_SAVE)) == GLFW.GLFW_PRESS;
+            if (isQuickSaveDown && !wasQuickSaveDown) {
+                quickSave(client);
+            }
+            wasQuickSaveDown = isQuickSaveDown;
+
             if (client.player != null) {
                 CheatModules.updateAll(client);
             }
@@ -452,6 +460,20 @@ public class DupeModClient implements ClientModInitializer {
 
     public static boolean isGhostBlocksEnabled() {
         return ghostBlockActive;
+    }
+
+    public static void quickSave(Minecraft client) {
+        try {
+            IntegratedServer server = client.getSingleplayerServer();
+            if (server == null) {
+                message(client, "Быстрое сохранение: только в одиночной игре");
+                return;
+            }
+            boolean ok = server.saveEverything(false, true, false);
+            message(client, ok ? "Мир сохранён" : "Сохранение: часть чанков ещё пишется");
+        } catch (Throwable t) {
+            message(client, "Сохранение не удалось");
+        }
     }
 
     private static void message(Minecraft client, String text) {

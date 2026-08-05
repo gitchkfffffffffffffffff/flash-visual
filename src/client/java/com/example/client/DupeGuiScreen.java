@@ -137,6 +137,8 @@ public class DupeGuiScreen extends Screen {
         yb = addVisToggle(xb, yb, colW, "Координаты", () -> CoordinatesHud.enabled, () -> CoordinatesHud.enabled = !CoordinatesHud.enabled);
         ya = addVisToggle(xa, ya, colW, "Джоджо", () -> JojoHud.enabled, () -> JojoHud.enabled = !JojoHud.enabled);
         yb = addVisToggle(xb, yb, colW, "View Model", () -> ViewModel.enabled, () -> ViewModel.enabled = !ViewModel.enabled);
+        ya = addVisToggle(xa, ya, colW, "Крылья", () -> WorldVisuals.wings, () -> WorldVisuals.wings = !WorldVisuals.wings);
+        ya = addVisToggle(xa, ya, colW, "Near (стрелки)", () -> WorldVisuals.near, () -> WorldVisuals.near = !WorldVisuals.near);
         ya = addVisToggle(xa, ya, colW, "Кит. шляпа", () -> WorldVisuals.chinaHat, () -> WorldVisuals.chinaHat = !WorldVisuals.chinaHat);
         ya = addVisToggle(xa, ya, colW, "Жигули", () -> WorldVisuals.zhiguli, () -> WorldVisuals.zhiguli = !WorldVisuals.zhiguli);
         yb = addVisToggle(xb, yb, colW, "Вид из салона", () -> WorldVisuals.zhiguliView, () -> WorldVisuals.zhiguliView = !WorldVisuals.zhiguliView);

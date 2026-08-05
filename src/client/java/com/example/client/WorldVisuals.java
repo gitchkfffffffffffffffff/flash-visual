@@ -23,6 +23,9 @@ public class WorldVisuals {
     public static boolean zhiguliView = false;
     public static boolean majorSuit = false;
     public static boolean skinOverride = true;
+    public static boolean wings = false;
+    public static boolean near = false;
+    public static double nearRange = 90.0;
     public static String skinTargetName = "iamknow";
 
     public static float hatScale = 1.0f;
@@ -41,6 +44,8 @@ public class WorldVisuals {
     private static final int SUIT_GOLD = 0xFFFFD24A;
     private static final int SUIT_BELT = 0xFF3B2A1A;
     private static final int SUIT_STAR = 0xFFFF3B30;
+    private static final int WING_FILL = 0xD014161C;
+    private static final int WING_LINE = 0xFF565B66;
 
     public static void render(GuiGraphics gui, Minecraft client) {
         if (client.level == null || client.player == null) {
@@ -50,7 +55,7 @@ public class WorldVisuals {
         if (!cam.isInitialized()) {
             return;
         }
-        if (!(chinaHat || jumpCircle || tracers || tracersMobs || nameTag || zhiguli || majorSuit)) {
+        if (!(chinaHat || jumpCircle || tracers || tracersMobs || nameTag || zhiguli || majorSuit || wings || near)) {
             return;
         }
 
@@ -87,6 +92,10 @@ public class WorldVisuals {
                 renderMajorSuit(gui, client, e, feet, head, camPos, fwd, w, h);
             }
 
+            if (wings && isPlayer) {
+                renderWings(gui, client, e, feet, camPos, fwd, w, h);
+            }
+
             if (jumpCircle && isPlayer) {
                 renderCircle(gui, client, feet, circleRadius, camPos, fwd, w, h, accent);
             } else if (jumpCircle && isMob && tracersMobs) {
@@ -108,6 +117,129 @@ public class WorldVisuals {
 
         if (zhiguli && client.player != null) {
             renderZhiguli(gui, client, client.player.position(), camPos, fwd, w, h);
+        }
+
+        if (wings && client.player != null) {
+            renderWings(gui, client, client.player, client.player.position(), camPos, fwd, w, h);
+        }
+
+        if (near) {
+            renderNear(gui, client, camPos, fwd, w, h);
+        }
+    }
+
+    private static void renderNear(GuiGraphics gui, Minecraft client, Vec3 camPos, Vector3fc fwd, int w, int h) {
+        double rangeSq = nearRange * nearRange;
+        for (Entity e : client.level.entitiesForRendering()) {
+            if (e == client.player || !(e instanceof Player) || e.isRemoved()) {
+                continue;
+            }
+            if (e.distanceToSqr(client.player) > rangeSq) {
+                continue;
+            }
+            double[] p = project(gui, client, e.position().add(0, e.getBbHeight() * 0.8, 0), camPos, fwd, w, h);
+            if (p == null) {
+                continue;
+            }
+            double dx = p[0] - (double) w / 2.0;
+            double dy = p[1] - (double) h / 2.0;
+            double d = Math.sqrt(dx * dx + dy * dy);
+            if (d < 40.0) {
+                continue;
+            }
+            double nx = dx / d;
+            double ny = dy / d;
+            double scX = (w / 2.0 - 26.0) / Math.max(1.0, Math.abs(dx) * 0.9);
+            double scY = (h / 2.0 - 26.0) / Math.max(1.0, Math.abs(dy) * 0.9);
+            double scale = Math.max(0.2, Math.min(scX, scY));
+            double ax = (double) w / 2.0 + dx * scale;
+            double ay = (double) h / 2.0 + dy * scale;
+            int accent = 0xFFFF5A5A;
+            drawArrow(gui, (float) ax, (float) ay, (float) Math.atan2(dy, dx), accent);
+            String name = ((Player) e).getName().getString();
+            int tw = client.font.width(name);
+            int lx = (int) (ax + nx * 16);
+            int ly = (int) (ay + ny * 16 - 3);
+            gui.drawString(client.font, Component.literal(name), lx, ly, accent);
+        }
+    }
+
+    private static void drawArrow(GuiGraphics gui, float x, float y, float angle, int color) {
+        gui.pose().pushMatrix();
+        gui.pose().translate(x, y);
+        gui.pose().rotate(angle);
+        double[][] tri = { { 11, 0 }, { -7, 5.5 }, { -7, -5.5 } };
+        fillPolygon(gui, tri, color);
+        line(gui, -7, 5.5, 11, 0, 1.0f, 0xFF000000);
+        line(gui, -7, -5.5, 11, 0, 1.0f, 0xFF000000);
+        gui.pose().popMatrix();
+    }
+
+    private static void renderWings(GuiGraphics gui, Minecraft client, Entity e, Vec3 feet,
+                                    Vec3 camPos, Vector3fc fwd, int w, int h) {
+        double hgt = Math.max(0.5, e.getBbHeight());
+        double yawRad = Math.toRadians(e.getYRot());
+        double bx = -Math.sin(yawRad);
+        double bz = Math.cos(yawRad);
+        double sx = -Math.cos(yawRad);
+        double sz = -Math.sin(yawRad);
+        double baseY = feet.y + hgt * 0.7;
+        double cbx = feet.x - bx * 0.08;
+        double cbz = feet.z - bz * 0.08;
+        long t = System.currentTimeMillis();
+        double flap = Math.sin(t / 260.0) * 0.22;
+        int accent = Theme.current();
+        for (int side = 1; side >= -1; side -= 2) {
+            double wx = sx * side;
+            double wz = sz * side;
+            double[] A = project(gui, client, new Vec3(cbx + wx * 0.16, baseY, cbz + wz * 0.16), camPos, fwd, w, h);
+            double[] C = project(gui, client, new Vec3(cbx + wx * 0.95, baseY + 0.20 + flap, cbz + wz * 0.95), camPos, fwd, w, h);
+            double[] F = project(gui, client, new Vec3(cbx + wx * 0.70 - bx * 0.20, baseY + 0.40 + flap * 0.9, cbz + wz * 0.70 - bz * 0.20), camPos, fwd, w, h);
+            double[] E = project(gui, client, new Vec3(cbx + wx * 0.40 - bx * 0.46, baseY + 0.66 + flap * 1.35, cbz + wz * 0.40 - bz * 0.46), camPos, fwd, w, h);
+            if (A == null || C == null || F == null || E == null) {
+                continue;
+            }
+            fillPolygon(gui, new double[][]{A, C, F}, WING_FILL);
+            fillPolygon(gui, new double[][]{A, C, E}, WING_FILL);
+            line(gui, A[0], A[1], C[0], C[1], 1.4f, WING_LINE);
+            line(gui, C[0], C[1], E[0], E[1], 1.4f, WING_LINE);
+            line(gui, E[0], E[1], A[0], A[1], 1.4f, WING_LINE);
+            line(gui, A[0], A[1], E[0], E[1], 1.0f, accent);
+        }
+    }
+
+    private static void fillPolygon(GuiGraphics gui, double[][] p, int color) {
+        int n = p.length;
+        int minY = Integer.MAX_VALUE;
+        int maxY = Integer.MIN_VALUE;
+        for (double[] pt : p) {
+            if (pt[1] < minY) {
+                minY = (int) Math.floor(pt[1]);
+            }
+            if (pt[1] > maxY) {
+                maxY = (int) Math.ceil(pt[1]);
+            }
+        }
+        for (int y = minY; y <= maxY; y++) {
+            double yy = y + 0.5;
+            java.util.ArrayList<Double> xs = new java.util.ArrayList<>();
+            for (int i = 0; i < n; i++) {
+                int j = (i + 1) % n;
+                double y0 = p[i][1];
+                double y1 = p[j][1];
+                if ((y0 <= yy && y1 > yy) || (y1 <= yy && y0 > yy)) {
+                    double x = p[i][0] + (yy - y0) * (p[j][0] - p[i][0]) / (y1 - y0);
+                    xs.add(x);
+                }
+            }
+            java.util.Collections.sort(xs);
+            for (int k = 0; k + 1 < xs.size(); k += 2) {
+                int x0 = (int) Math.ceil(xs.get(k));
+                int x1 = (int) Math.floor(xs.get(k + 1));
+                if (x1 >= x0) {
+                    gui.fill(x0, y, x1 + 1, y + 1, color);
+                }
+            }
         }
     }
 

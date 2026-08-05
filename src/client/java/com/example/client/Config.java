@@ -118,6 +118,15 @@ public class Config {
         }
         put("friends", String.join(";", Friends.all()));
 
+        StringBuilder notes = new StringBuilder();
+        for (Map.Entry<String, String> e : NickNotes.all().entrySet()) {
+            if (notes.length() > 0) {
+                notes.append("~");
+            }
+            notes.append(e.getKey()).append("|").append(e.getValue());
+        }
+        put("nicknotes", notes.toString());
+
         Path dir = configFile(client).getParent();
         try {
             Files.createDirectories(dir);
@@ -269,6 +278,20 @@ public class Config {
             for (String n : fr.split(";")) {
                 if (!n.isEmpty()) {
                     Friends.add(n);
+                }
+            }
+        }
+
+        String notes = get("nicknotes", null);
+        if (notes != null && !notes.isEmpty()) {
+            NickNotes.clear();
+            for (String entry : notes.split("~")) {
+                if (entry == null || entry.isEmpty()) {
+                    continue;
+                }
+                int bar = entry.indexOf('|');
+                if (bar > 0 && bar < entry.length() - 1) {
+                    NickNotes.set(entry.substring(0, bar), entry.substring(bar + 1));
                 }
             }
         }

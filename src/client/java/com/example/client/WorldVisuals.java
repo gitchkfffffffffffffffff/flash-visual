@@ -104,7 +104,7 @@ public class WorldVisuals {
                 renderMajorSuit(gui, client, e, feet, head, camPos, fwd, w, h);
             }
 
-            if (wings && isPlayer) {
+            if (wings && isPlayer && client.player != null && e == client.player) {
                 renderWings(gui, client, e, feet, camPos, fwd, w, h);
             }
 

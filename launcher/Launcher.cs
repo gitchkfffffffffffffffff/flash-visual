@@ -94,6 +94,7 @@ namespace FlashVisualLauncher
             BuildConsole();
 
             switchPage(0);
+            Core.SyncAltsToMod();
             Append("Flash Visual launcher · " + Core.MOD_VERSION + " · Fabric 1.21.11");
             Append("Директория установки: " + Core.InstallDir());
         }
@@ -595,6 +596,7 @@ namespace FlashVisualLauncher
             if (name.Length == 0) { Append("Введите ник."); return; }
             Core.Config.Accounts.Add(new LAccount { Name = name, Type = "offline" });
             Core.SaveConfig();
+            Core.SyncAltsToMod();
             RefreshAccountList();
             txtAccount.Text = "";
             Append("Аккаунт добавлен: " + name);
@@ -606,6 +608,7 @@ namespace FlashVisualLauncher
             if (i < 0 || i >= Core.Config.Accounts.Count) { Append("Выберите аккаунт из списка."); return; }
             Core.Config.ActiveAccount = i;
             Core.SaveConfig();
+            Core.SyncAltsToMod();
             RefreshAccountList();
             Append("Выбран аккаунт: " + Core.Config.Accounts[i].Name);
         }
@@ -618,6 +621,7 @@ namespace FlashVisualLauncher
             Core.Config.Accounts.RemoveAt(i);
             if (Core.Config.ActiveAccount >= Core.Config.Accounts.Count) Core.Config.ActiveAccount = 0;
             Core.SaveConfig();
+            Core.SyncAltsToMod();
             RefreshAccountList();
             Append("Аккаунт удалён: " + name);
         }

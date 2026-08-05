@@ -114,6 +114,28 @@ namespace FlashVisualLauncher
             return Config.Accounts[i];
         }
 
+        public static void SyncAltsToMod()
+        {
+            try
+            {
+                string dir = Path.Combine(InstallDir(), "config", "flash-visual");
+                Directory.CreateDirectory(dir);
+                string path = Path.Combine(dir, "alts.txt");
+                var sb = new StringBuilder();
+                int idx = Config.ActiveAccount;
+                if (Config.Accounts.Count > 0 && idx >= 0 && idx < Config.Accounts.Count)
+                {
+                    sb.AppendLine("#active=" + Config.Accounts[idx].Name);
+                }
+                foreach (var a in Config.Accounts)
+                {
+                    sb.AppendLine(a.Name);
+                }
+                File.WriteAllText(path, sb.ToString(), Encoding.UTF8);
+            }
+            catch { }
+        }
+
         static WebClient NewClient()
         {
             var wc = new WebClient();
@@ -472,6 +494,7 @@ public const string MOD_URL = "https://github.com/gitchkfffffffffffffffff/flash-
                     string dir = InstallDir();
                     var acc = Active();
                     if (acc == null) { done("Сначала добавьте аккаунт в разделе «Аккаунты»."); return; }
+                    SyncAltsToMod();
                     string java = !string.IsNullOrEmpty(Config.JavaPath) && File.Exists(Config.JavaPath)
                         ? Config.JavaPath : AutoDetectJava();
                     if (string.IsNullOrEmpty(java) || !File.Exists(java))

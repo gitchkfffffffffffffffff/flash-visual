@@ -20,7 +20,7 @@ import java.util.function.Supplier;
 
 public class DupeGuiScreen extends Screen {
     private static final int SIDEBAR_W = 150;
-    private static final String[] CATS = {"ГЛАВНОЕ", "ВИЗУАЛ", "МИР", "ЗВУК", "МЕДИА"};
+    private static final String[] CATS = {"ГЛАВНОЕ", "ВИЗУАЛ", "МИР", "ЗВУК", "МЕДИА", "КОНСОЛЬ"};
     private static final double[] RANGES = {3, 4, 5, 6, 8};
     private static final int[] DELAYS = {1, 2, 3, 5, 8};
 
@@ -65,7 +65,8 @@ public class DupeGuiScreen extends Screen {
             case 1 -> buildVisual(cx, cw);
             case 2 -> buildWorld(cx, cw);
             case 3 -> buildSound(cx, cw);
-            default -> buildMedia(cx, cw);
+            case 4 -> buildMedia(cx, cw);
+            default -> buildConsole(cx, cw);
         }
     }
 
@@ -268,6 +269,11 @@ public class DupeGuiScreen extends Screen {
         });
     }
 
+    private void buildConsole(int cx, int cw) {
+        int y = 64;
+        addAction(cx, y, cw, "Открыть командную консоль", () -> client.setScreen(new CommandConsole()));
+    }
+
     private void addToggle(int x, int y, int w, String name, BooleanSupplier state, Runnable toggle) {
         addRenderableWidget(new Ui.PulseRow(x, y, w, 26, name,
             state::getAsBoolean,
@@ -318,6 +324,29 @@ public class DupeGuiScreen extends Screen {
         gui.fill(SIDEBAR_W, 47, SIDEBAR_W + 1, height, Ui.PULSE_LINE);
         if (category == 0) {
             renderKeybinds(gui, font);
+        }
+        if (category == 5) {
+            renderConsoleHelp(gui, font);
+        }
+    }
+
+    private void renderConsoleHelp(GuiGraphics gui, Font font) {
+        int cx = SIDEBAR_W + 20;
+        int y = 120;
+        String[] lines = {
+            "Клиентские команды (без прав сервера):",
+            "  tp <x y z>  — телепорт по координатам",
+            "  tp <ник>    — телепорт к игроку",
+            "  tptarget    — телепорт к прицелу",
+            "  ghost · freecam · killaura · scaffold · autototem · fullbright",
+            "  time <day|night|off> · esp <player|mob|item|off>",
+            "  house · rpc · suit · zhiguli · zvit · music · target · watermark · fps",
+            "  invis · fognr · cls · help",
+            "Нужные права сервера не требуются — всё выполняет клиент."
+        };
+        for (String line : lines) {
+            gui.drawString(font, Component.literal(line), cx, y, 0xFFB6BDC9);
+            y += 12;
         }
     }
 

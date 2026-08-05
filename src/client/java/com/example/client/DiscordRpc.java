@@ -16,7 +16,9 @@ import java.util.List;
 public class DiscordRpc {
     public static volatile boolean enabled = true;
 
-    private static final String CLIENT_ID = "1533739399555321866";
+    public static volatile boolean showDetails = true;
+
+    public static final String CLIENT_ID = "1533739399555321866";
 
     private static final int OP_HANDSHAKE = 0;
     private static final int OP_FRAME = 1;

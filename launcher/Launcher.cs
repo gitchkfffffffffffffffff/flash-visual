@@ -12,12 +12,14 @@ namespace FlashVisualLauncher
 {
     public class LauncherForm : Form
     {
-        private static readonly Color BG = Color.FromArgb(7, 10, 18);
-        private static readonly Color SIDEBAR = Color.FromArgb(11, 16, 28);
-        private static readonly Color PANEL = Color.FromArgb(15, 22, 38);
-        private static readonly Color ACCENT = Color.FromArgb(0, 207, 255);
-        private static readonly Color TEXT = Color.FromArgb(222, 228, 240);
-        private static readonly Color SUB = Color.FromArgb(122, 134, 154);
+        private static readonly Color BG = Color.FromArgb(6, 6, 6);
+        private static readonly Color SIDEBAR = Color.FromArgb(10, 10, 10);
+        private static readonly Color PANEL = Color.FromArgb(16, 16, 16);
+        private static readonly Color ACCENT = Color.FromArgb(154, 154, 154);
+        private static readonly Color TEXT = Color.FromArgb(207, 207, 207);
+        private static readonly Color SUB = Color.FromArgb(122, 122, 122);
+        private static readonly Color LINE = Color.FromArgb(34, 34, 34);
+        private static readonly Color PANEL_FILL = Color.FromArgb(16, 16, 16);
 
         private TextBox logBox;
         private PulseButton btnPlay;
@@ -201,7 +203,7 @@ namespace FlashVisualLauncher
                 Location = new Point(198, 104),
                 Size = new Size(200, 26),
                 DropDownStyle = ComboBoxStyle.DropDownList,
-                BackColor = Color.FromArgb(12, 20, 36),
+                BackColor = Color.FromArgb(13, 13, 13),
                 ForeColor = TEXT,
                 FlatStyle = FlatStyle.Flat
             };
@@ -222,7 +224,7 @@ namespace FlashVisualLauncher
                 Location = new Point(406, 104),
                 Size = new Size(170, 26),
                 DropDownStyle = ComboBoxStyle.DropDownList,
-                BackColor = Color.FromArgb(12, 20, 36),
+                BackColor = Color.FromArgb(13, 13, 13),
                 ForeColor = TEXT,
                 FlatStyle = FlatStyle.Flat
             };
@@ -373,7 +375,7 @@ namespace FlashVisualLauncher
             {
                 Location = new Point(198, 140),
                 Size = new Size(420, 180),
-                BackColor = Color.FromArgb(12, 20, 36),
+                BackColor = Color.FromArgb(13, 13, 13),
                 ForeColor = TEXT,
                 BorderStyle = BorderStyle.FixedSingle,
                 Font = new Font("Segoe UI", 10.5f)
@@ -407,7 +409,7 @@ namespace FlashVisualLauncher
             {
                 Text = text,
                 Outline = true,
-                ForeColor = Color.FromArgb(222, 228, 240),
+                ForeColor = Color.FromArgb(207, 207, 207),
                 Location = new Point(x, y),
                 Size = new Size(w, 34),
                 FlatStyle = FlatStyle.Flat,
@@ -485,7 +487,7 @@ namespace FlashVisualLauncher
             {
                 Location = new Point(198, 110),
                 Size = new Size(300, 28),
-                BackColor = Color.FromArgb(12, 20, 36),
+                BackColor = Color.FromArgb(13, 13, 13),
                 ForeColor = TEXT,
                 BorderStyle = BorderStyle.FixedSingle,
                 Font = new Font("Segoe UI", 11f)
@@ -508,7 +510,7 @@ namespace FlashVisualLauncher
             {
                 Location = new Point(198, 156),
                 Size = new Size(300, 150),
-                BackColor = Color.FromArgb(12, 20, 36),
+                BackColor = Color.FromArgb(13, 13, 13),
                 ForeColor = TEXT,
                 BorderStyle = BorderStyle.FixedSingle,
                 Font = new Font("Segoe UI", 10.5f)
@@ -580,7 +582,7 @@ namespace FlashVisualLauncher
             {
                 Location = new Point(198, 184),
                 Size = new Size(460, 28),
-                BackColor = Color.FromArgb(12, 20, 36),
+                BackColor = Color.FromArgb(13, 13, 13),
                 ForeColor = TEXT,
                 BorderStyle = BorderStyle.FixedSingle,
                 Text = Core.Config.JavaPath
@@ -624,7 +626,7 @@ namespace FlashVisualLauncher
             {
                 Location = new Point(198, 258),
                 Size = new Size(80, 28),
-                BackColor = Color.FromArgb(12, 20, 36),
+                BackColor = Color.FromArgb(13, 13, 13),
                 ForeColor = TEXT,
                 BorderStyle = BorderStyle.FixedSingle,
                 Text = Core.Config.Width.ToString()
@@ -633,7 +635,7 @@ namespace FlashVisualLauncher
             {
                 Location = new Point(290, 258),
                 Size = new Size(80, 28),
-                BackColor = Color.FromArgb(12, 20, 36),
+                BackColor = Color.FromArgb(13, 13, 13),
                 ForeColor = TEXT,
                 BorderStyle = BorderStyle.FixedSingle,
                 Text = Core.Config.Height.ToString()
@@ -648,7 +650,7 @@ namespace FlashVisualLauncher
             {
                 Location = new Point(198, 332),
                 Size = new Size(460, 28),
-                BackColor = Color.FromArgb(12, 20, 36),
+                BackColor = Color.FromArgb(13, 13, 13),
                 ForeColor = TEXT,
                 BorderStyle = BorderStyle.FixedSingle,
                 Text = Core.Config.InstallDir
@@ -710,7 +712,7 @@ namespace FlashVisualLauncher
                 BorderStyle = BorderStyle.None,
                 ScrollBars = ScrollBars.Vertical,
                 BackColor = PANEL,
-                ForeColor = Color.FromArgb(200, 210, 226),
+                ForeColor = Color.FromArgb(196, 196, 196),
                 Font = new Font("Consolas", 9.5f),
                 WordWrap = false,
                 Location = new Point(198 + 6, 452),
@@ -842,15 +844,15 @@ namespace FlashVisualLauncher
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
 
-            using (var bg = new LinearGradientBrush(ClientRectangle, BG, Color.FromArgb(10, 14, 26), 90f))
+            using (var bg = new LinearGradientBrush(ClientRectangle, BG, Color.FromArgb(10, 10, 10), 90f))
             {
                 g.FillRectangle(bg, ClientRectangle);
             }
 
             g.FillRectangle(new SolidBrush(SIDEBAR), 0, 40, 190, Height - 40);
-            g.FillRectangle(new SolidBrush(Color.FromArgb(18, 26, 44)), 190, 40, 1, Height - 40);
+            g.FillRectangle(new SolidBrush(LINE), 190, 40, 1, Height - 40);
             g.FillRectangle(new SolidBrush(ACCENT), 0, 0, 190, 2);
-            g.FillRectangle(new SolidBrush(Color.FromArgb(16, 24, 44)), 190, 0, Width - 190, 1);
+            g.FillRectangle(new SolidBrush(LINE), 190, 0, Width - 190, 1);
 
             Rectangle logo = new Rectangle(14, 8, 26, 26);
             using (var path = RoundRect(logo, 7))
@@ -871,7 +873,7 @@ namespace FlashVisualLauncher
             {
                 string status = busy ? "Выполняется…" : "Готов к запуску";
                 g.DrawString(status, new Font("Segoe UI", 20f, FontStyle.Bold), new SolidBrush(TEXT), 198, 70);
-                using (var line = new LinearGradientBrush(new Rectangle(198, 132, 300, 2), ACCENT, Color.FromArgb(0, 80, 120), 0f))
+                using (var line = new LinearGradientBrush(new Rectangle(198, 132, 300, 2), ACCENT, Color.FromArgb(50, 50, 50), 0f))
                 {
                     g.FillRectangle(line, 198, 132, 300, 2);
                 }
@@ -895,18 +897,18 @@ namespace FlashVisualLauncher
 
             Rectangle console = new Rectangle(198, 430, ClientSize.Width - 222, ClientSize.Height - 452);
             g.FillRectangle(new SolidBrush(PANEL), console);
-            g.DrawRectangle(new Pen(Color.FromArgb(30, 44, 70), 1f), console);
+            g.DrawRectangle(new Pen(Color.FromArgb(34, 34, 34), 1f), console);
             g.DrawString("КОНСОЛЬ", new Font("Segoe UI", 9f, FontStyle.Bold), new SolidBrush(SUB), console.X + 8, console.Y - 18);
         }
 
         protected override void OnMouseDown(MouseEventArgs e)
         {
             base.OnMouseDown(e);
-            if (e.Button == MouseButtons.Left && e.Y < 40)
-            {
-                ReleaseCapture();
-                SendMessage(Handle, WM_NCLBUTTONDOWN, HTCAPTION, 0);
-            }
+            if (e.Button != MouseButtons.Left || e.Y >= 40) return;
+            if (e.X > Width - 44 && e.X < Width - 18) { Close(); return; }
+            if (e.X > Width - 74 && e.X < Width - 48) { WindowState = FormWindowState.Minimized; return; }
+            ReleaseCapture();
+            SendMessage(Handle, WM_NCLBUTTONDOWN, HTCAPTION, 0);
         }
 
         protected override void OnMouseUp(MouseEventArgs e)
@@ -951,8 +953,8 @@ namespace FlashVisualLauncher
         public bool Nav { get; set; }
         public bool NavActive { get; set; }
 
-        private static readonly Color Accent = Color.FromArgb(0, 207, 255);
-        private static readonly Color Side = Color.FromArgb(11, 16, 28);
+        private static readonly Color Accent = Color.FromArgb(154, 154, 154);
+        private static readonly Color Side = Color.FromArgb(10, 10, 10);
 
         public PulseButton()
         {
@@ -968,11 +970,11 @@ namespace FlashVisualLauncher
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             Rectangle r = new Rectangle(0, 0, Width - 1, Height - 1);
-            Color textColor = Enabled ? ForeColor : Color.FromArgb(122, 134, 154);
+            Color textColor = Enabled ? ForeColor : Color.FromArgb(122, 122, 122);
 
             if (Nav)
             {
-                Color c = NavActive ? Color.FromArgb(20, 34, 58) : (hover ? Color.FromArgb(15, 24, 42) : Side);
+                Color c = NavActive ? Color.FromArgb(20, 20, 20) : (hover ? Color.FromArgb(14, 14, 14) : Side);
                 g.FillRectangle(new SolidBrush(c), r);
                 if (NavActive) g.FillRectangle(new SolidBrush(Accent), 0, 0, 3, Height);
                 g.DrawString(Text, Font, new SolidBrush(NavActive ? Accent : textColor), 18, (Height - Font.Height) / 2 - 1);
@@ -983,8 +985,8 @@ namespace FlashVisualLauncher
             {
                 if (Primary)
                 {
-                    Color baseC = hover && Enabled ? Color.FromArgb(60, 222, 255) : Accent;
-                    using (var bg = new LinearGradientBrush(r, baseC, Color.FromArgb(0, 150, 210), 90f))
+                    Color baseC = hover && Enabled ? Color.FromArgb(207, 207, 207) : Accent;
+                    using (var bg = new LinearGradientBrush(r, baseC, Color.FromArgb(120, 120, 120), 90f))
                     {
                         g.FillPath(bg, path);
                     }
@@ -992,8 +994,8 @@ namespace FlashVisualLauncher
                 }
                 else
                 {
-                    Color line = hover && Enabled ? Accent : Color.FromArgb(48, 66, 96);
-                    using (var fill = new SolidBrush(hover ? Color.FromArgb(18, 28, 48) : Color.FromArgb(12, 20, 36)))
+                    Color line = hover && Enabled ? Accent : Color.FromArgb(48, 48, 48);
+                    using (var fill = new SolidBrush(hover ? Color.FromArgb(22, 22, 22) : Color.FromArgb(13, 13, 13)))
                     {
                         g.FillPath(fill, path);
                     }

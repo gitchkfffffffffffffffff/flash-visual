@@ -18,6 +18,7 @@ public class CheatModules {
         AutoSprint.update(client);
         NoFall.update(client);
         ChestStealer.update(client);
+        Noclip.update(client);
     }
 
     public static void disableAll(Minecraft client) {
@@ -28,7 +29,45 @@ public class CheatModules {
         AutoSprint.enabled = false;
         NoFall.enabled = false;
         ChestStealer.enabled = false;
+        Noclip.enabled = false;
         Fly.disable(client);
+        Noclip.disable(client);
+    }
+
+    public static class Noclip {
+        public static boolean enabled = false;
+        public static double speed = 0.42;
+
+        public static void update(Minecraft client) {
+            LocalPlayer p = client.player;
+            if (p == null || !enabled) {
+                return;
+            }
+            p.noPhysics = true;
+            p.setNoGravity(true);
+            Vec2 mv = p.input.getMoveVector();
+            double fwd = mv.y;
+            double strafe = mv.x;
+            boolean jump = p.input.keyPresses.jump();
+            boolean sneak = p.input.keyPresses.shift();
+            double m = speed;
+            double yaw = Math.toRadians(p.getYRot());
+            double x = (-Math.sin(yaw) * fwd + Math.cos(yaw) * strafe) * m;
+            double z = (Math.cos(yaw) * fwd + Math.sin(yaw) * strafe) * m;
+            double y = 0;
+            if (jump) {
+                y = m * 0.75;
+            } else if (sneak) {
+                y = -m * 0.75;
+            }
+            p.setDeltaMovement(x, y, z);
+        }
+
+        public static void disable(Minecraft client) {
+            if (client.player != null) {
+                client.player.setNoGravity(false);
+            }
+        }
     }
 
     public static class Fly {

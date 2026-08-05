@@ -33,7 +33,9 @@ public class WorldVisuals {
     public static float circleRadius = 3.0f;
 
     private static final double RANGE = 64.0;
-    private static final int HAT_COLOR = 0xDDFF5555;
+    private static final int HAT_COLOR = 0xFFFF5555;
+    private static final int HAT_FILL = 0xCCFF7A4D;
+    private static final int HAT_BRIM = 0xFFFF8A5A;
     private static final int CIRCLE_COLOR = 0xCCFFAA00;
     private static final int TRACER_COLOR = 0x88FFFFFF;
     private static final int MOB_COLOR = 0xCCFF5555;
@@ -283,8 +285,9 @@ public class WorldVisuals {
 
     private static void renderHat(GuiGraphics gui, Minecraft client, Entity e, Vec3 head,
                                   Vec3 camPos, Vector3fc fwd, int w, int h) {
-        double r = 0.32 * hatScale;
-        double hgt = 0.45 * hatScale;
+        double r = 0.34 * hatScale;
+        double hgt = 0.42 * hatScale;
+        double brim = 0.52 * hatScale;
         Vec3 apex = new Vec3(head.x, head.y + hgt, head.z);
         Vec3 camToHead = head.subtract(camPos);
         if (camToHead.lengthSqr() < 1.0E-4) {
@@ -299,16 +302,64 @@ public class WorldVisuals {
         right = right.normalize();
         Vec3 leftPt = new Vec3(head.x - right.x * r, head.y, head.z - right.z * r);
         Vec3 rightPt = new Vec3(head.x + right.x * r, head.y, head.z + right.z * r);
+        Vec3 blPt = new Vec3(head.x - right.x * brim, head.y + 0.02, head.z - right.z * brim);
+        Vec3 brPt = new Vec3(head.x + right.x * brim, head.y + 0.02, head.z + right.z * brim);
 
         double[] a = project(gui, client, apex, camPos, fwd, w, h);
         double[] lt = project(gui, client, leftPt, camPos, fwd, w, h);
         double[] rt = project(gui, client, rightPt, camPos, fwd, w, h);
-        if (a == null || lt == null || rt == null) {
+        double[] bl = project(gui, client, blPt, camPos, fwd, w, h);
+        double[] br = project(gui, client, brPt, camPos, fwd, w, h);
+        if (a == null || lt == null || rt == null || bl == null || br == null) {
             return;
         }
+        fillTriangle(gui, a, lt, rt, HAT_FILL);
         line(gui, a[0], a[1], lt[0], lt[1], 2.0f, HAT_COLOR);
         line(gui, a[0], a[1], rt[0], rt[1], 2.0f, HAT_COLOR);
-        line(gui, lt[0], lt[1], rt[0], rt[1], 2.0f, HAT_COLOR);
+        fillQuad(gui, lt, bl, br, rt, HAT_FILL);
+        line(gui, bl[0], bl[1], br[0], br[1], 3.0f, HAT_BRIM);
+        line(gui, lt[0], lt[1], rt[0], rt[1], 1.5f, HAT_COLOR);
+    }
+
+    private static void fillTriangle(GuiGraphics gui, double[] p0, double[] p1, double[] p2, int color) {
+        double[][] pts = { p0, p1, p2 };
+        java.util.Arrays.sort(pts, (u, v) -> Double.compare(u[1], v[1]));
+        double y0 = pts[0][1], y1 = pts[1][1], y2 = pts[2][1];
+        double[] x0 = { pts[0][0] }, x1 = { pts[2][0] };
+        double top = Math.ceil(y0), bot = Math.floor(y2);
+        if (top > bot) {
+            return;
+        }
+        int ty = Math.max(0, (int) top);
+        int by = (int) bot;
+        for (int y = ty; y <= by; y++) {
+            double yy = y + 0.5;
+            double xl = Double.MAX_VALUE, xr = -Double.MAX_VALUE;
+            double[][] edges = { { pts[0][0], pts[0][1], pts[1][0], pts[1][1] },
+                { pts[1][0], pts[1][1], pts[2][0], pts[2][1] },
+                { pts[0][0], pts[0][1], pts[2][0], pts[2][1] } };
+            for (double[] ed : edges) {
+                double e0y = ed[1], e1y = ed[3];
+                if (yy < Math.min(e0y, e1y) || yy > Math.max(e0y, e1y)) {
+                    continue;
+                }
+                if (Math.abs(e1y - e0y) < 1.0E-4) {
+                    continue;
+                }
+                double t = (yy - e0y) / (e1y - e0y);
+                double ex = ed[0] + (ed[2] - ed[0]) * t;
+                xl = Math.min(xl, ex);
+                xr = Math.max(xr, ex);
+            }
+            if (xr >= xl) {
+                gui.fill((int) Math.max(0, Math.ceil(xl)), y, (int) Math.max((int) xl, Math.floor(xr)) + 1, y + 1, color);
+            }
+        }
+    }
+
+    private static void fillQuad(GuiGraphics gui, double[] a, double[] b, double[] c, double[] d, int color) {
+        fillTriangle(gui, a, b, c, color);
+        fillTriangle(gui, a, c, d, color);
     }
 
     private static void renderMajorSuit(GuiGraphics gui, Minecraft client, Entity e, Vec3 feet, Vec3 head,

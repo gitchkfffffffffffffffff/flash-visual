@@ -71,6 +71,7 @@ public class HudRenderer {
                 rebuildEnemies(client);
             }
         }
+        PlayerSearch.tick(client);
     }
 
     private static void rebuildEnemies(Minecraft client) {
@@ -145,8 +146,24 @@ public class HudRenderer {
         if (enemiesEnabled) {
             renderEnemies(gui, client);
         }
+        PlayerSearch.render(gui, client);
+        if (StreamerMode.isOn()) {
+            renderStreamerBadge(gui, client);
+        }
         WorldVisuals.render(gui, client);
         HudDrag.endFrame(client);
+    }
+
+    private static void renderStreamerBadge(GuiGraphics gui, Minecraft client) {
+        Font font = client.font;
+        String label = "STREAMER MODE";
+        int w = font.width(label) + 16;
+        int[] pos = HudPos.get("streamer", gui.guiWidth() - w - 6, 4);
+        int x = pos[0];
+        int y = pos[1];
+        Ui.panel(gui, x, y, w, 14, 0xB00B0F1A, 0xFFFF5555);
+        HudDrag.setArea("streamer", x, y, w, 14);
+        gui.drawString(font, Component.literal(label), x + 8, y + 3, 0xFFFF8888);
     }
 
     private static void renderEnemies(GuiGraphics gui, Minecraft client) {
@@ -162,7 +179,7 @@ public class HudRenderer {
         int[] pos = HudPos.get("enemies", gui.guiWidth() - w - 6, gui.guiHeight() / 2 - panelH / 2);
         int x = pos[0];
         int y = pos[1];
-        Ui.panel(gui, x, y, w, panelH, 0xC00B0F1A, 0xFF1E2A3E);
+        Ui.panel(gui, x, y, w, panelH, Ui.PULSE_PANEL, Ui.PULSE_LINE);
         HudDrag.setArea("enemies", x, y, w, panelH);
         String head = "ВРАГИ (" + n + ")";
         int hw = font.width(head);
@@ -210,7 +227,7 @@ public class HudRenderer {
         String ver = "v1.1.0-pre1";
         int w = font.width(name) + font.width(ver) + 18;
         int x = 4;
-        int y = gui.guiHeight() - 18;
+        int y = 4;
         Ui.panel(gui, x, y, w, 14, 0xA0121212, 0x33FFAA00);
         Ui.gradientText(gui, font, name, x + 6, y + 3, 0xFFFF8800, 0xFFFFD24A);
         gui.drawString(font, Component.literal(ver), x + 6 + font.width(name) + 5, y + 3, 0xFF9A9A9A);
@@ -218,6 +235,10 @@ public class HudRenderer {
 
     public static String getCurrentMusic() {
         return currentMusic;
+    }
+
+    public static int getLastFps() {
+        return Minecraft.getInstance().getFps();
     }
 
     public static void updateInteraction(Minecraft client) {
@@ -472,6 +493,10 @@ public class HudRenderer {
         int[] toff = HudPos.get("target", 0, 0);
 
         String name = target.getName().getString();
+        String own = StreamerMode.ownNick(client);
+        if (own != null && own.equalsIgnoreCase(name)) {
+            name = "Вы";
+        }
         boolean friend = target instanceof Player && Friends.contains(name);
         int nameColor = friend ? Ui.GREEN : (target instanceof Player ? 0xFF2ECC40 : 0xFFFFFFFF);
 

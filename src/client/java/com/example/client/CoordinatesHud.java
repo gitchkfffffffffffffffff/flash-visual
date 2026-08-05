@@ -15,13 +15,17 @@ public class CoordinatesHud {
         if (player == null) {
             return;
         }
-        int x = (int) Math.floor(player.getX());
-        int y = (int) Math.floor(player.getY());
-        int z = (int) Math.floor(player.getZ());
-        String facing = facingName(player.getDirection());
-
         Font font = client.font;
-        String text = "XYZ  " + x + " / " + y + " / " + z + "  " + facing;
+        String text;
+        if (StreamerMode.coordsString() != null) {
+            text = "XYZ  " + StreamerMode.coordsString() + "  " + StreamerMode.coordsString();
+        } else {
+            int x = (int) Math.floor(player.getX());
+            int y = (int) Math.floor(player.getY());
+            int z = (int) Math.floor(player.getZ());
+            String facing = facingName(player.getDirection());
+            text = "XYZ  " + x + " / " + y + " / " + z + "  " + facing;
+        }
         int w = font.width(text) + 14;
         int h = 14;
 
@@ -32,8 +36,16 @@ public class CoordinatesHud {
         HudDrag.setArea("coords", px, py, w, h);
         gui.drawString(font, Component.literal("XYZ"), px + 5, py + 3, 0xFF9A9A9A);
         int numX = px + 5 + font.width("XYZ") + 3;
-        gui.drawString(font, Component.literal(x + " / " + y + " / " + z), numX, py + 3, 0xFF00CFFF);
-        gui.drawString(font, Component.literal(facing), numX + font.width(x + " / " + y + " / " + z) + 5, py + 3, 0xFF9A9A9A);
+        if (StreamerMode.coordsString() != null) {
+            gui.drawString(font, Component.literal(StreamerMode.coordsString() + " / " + StreamerMode.coordsString() + " / " + StreamerMode.coordsString()), numX, py + 3, 0xFFCFCFCF);
+        } else {
+            int x = (int) Math.floor(player.getX());
+            int y = (int) Math.floor(player.getY());
+            int z = (int) Math.floor(player.getZ());
+            gui.drawString(font, Component.literal(x + " / " + y + " / " + z), numX, py + 3, 0xFFCFCFCF);
+            String facing = facingName(player.getDirection());
+            gui.drawString(font, Component.literal(facing), numX + font.width(x + " / " + y + " / " + z) + 5, py + 3, 0xFF9A9A9A);
+        }
     }
 
     private static String facingName(Direction dir) {

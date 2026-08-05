@@ -98,14 +98,32 @@ public class SmtcReader {
     }
 
     private static void run() {
+        while (!Thread.currentThread().isInterrupted()) {
+            try {
+                if (!runOnce()) {
+                    Thread.sleep(2000);
+                }
+            } catch (Throwable ignored) {
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    return;
+                }
+            }
+        }
+        alive = false;
+    }
+
+    private static boolean runOnce() {
+        Process p = null;
         try {
-            Process p = new ProcessBuilder("powershell.exe", "-NoLogo", "-NoProfile", "-NonInteractive",
+            p = new ProcessBuilder("powershell.exe", "-NoLogo", "-NoProfile", "-NonInteractive",
                 "-ExecutionPolicy", "Bypass", "-Command", SCRIPT)
                 .redirectErrorStream(true)
                 .start();
             OutputStreamWriter out = new OutputStreamWriter(p.getOutputStream(), StandardCharsets.UTF_8);
             BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8));
-            while (!Thread.currentThread().isInterrupted()) {
+            while (!p.isAlive() || in.ready()) {
                 try {
                     out.write("GET\n");
                     out.flush();
@@ -115,14 +133,20 @@ public class SmtcReader {
                     }
                     parse(line);
                     alive = true;
+                    Thread.sleep(500);
                 } catch (Exception e) {
                     break;
                 }
             }
             alive = false;
-            p.destroy();
+            return false;
         } catch (Throwable ignored) {
             alive = false;
+            return false;
+        } finally {
+            if (p != null) {
+                p.destroy();
+            }
         }
     }
 

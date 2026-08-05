@@ -27,7 +27,7 @@ public class PotionHud {
 
         int count = Math.min(effects.size(), MAX);
         int panelH = count * ROW_H + 8;
-        Ui.panel(gui, x, y, W, panelH, 0xC00B0F1A, 0xFF1E2A3E);
+        Ui.panel(gui, x, y, W, panelH, Ui.PULSE_PANEL, Ui.PULSE_LINE);
         HudDrag.setArea("potions", x, y, W, panelH);
 
         int i = 0;
@@ -37,7 +37,7 @@ public class PotionHud {
             }
             int ry = y + 4 + i * ROW_H;
             int color = e.getEffect().value().getColor() & 0xFFFFFF;
-            gui.fill(x + 3, ry + 1, x + 18, ry + ROW_H - 1, 0xFF0B0F1A);
+            gui.fill(x + 3, ry + 1, x + 18, ry + ROW_H - 1, 0xFF0A0A0A);
             Identifier icon = effectSprite(e);
             if (icon != null) {
                 try {

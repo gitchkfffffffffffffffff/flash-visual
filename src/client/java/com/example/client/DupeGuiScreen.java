@@ -3,6 +3,7 @@ package com.example.client;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
@@ -20,7 +21,7 @@ import java.util.function.Supplier;
 
 public class DupeGuiScreen extends Screen {
     private static final int SIDEBAR_W = 150;
-    private static final String[] CATS = {"ГЛАВНОЕ", "ВИЗУАЛ", "МИР", "ЗВУК", "МЕДИА", "КОНСОЛЬ"};
+    private static final String[] CATS = {"ГЛАВНОЕ", "ВИЗУАЛ", "МИР", "ЗВУК", "МЕДИА", "МЕТКИ", "СОЗДАТЕЛИ", "КОНСОЛЬ"};
     private static final double[] RANGES = {3, 4, 5, 6, 8};
     private static final int[] DELAYS = {1, 2, 3, 5, 8};
 
@@ -31,6 +32,10 @@ public class DupeGuiScreen extends Screen {
 
     private final Minecraft client = Minecraft.getInstance();
     private int category = 0;
+    private int contentScroll = 0;
+    private int contentMax = 0;
+    private final List<AbstractWidget> contentWidgets = new ArrayList<>();
+    private final List<Integer> contentYs = new ArrayList<>();
     private QuickCommandBox quickCommandBox;
     private EditBox tpX;
     private EditBox tpY;
@@ -48,12 +53,16 @@ public class DupeGuiScreen extends Screen {
 
     private void rebuild() {
         clearWidgets();
+        contentWidgets.clear();
+        contentYs.clear();
+        contentMax = 0;
         int y = 66;
         for (int i = 0; i < CATS.length; i++) {
             int idx = i;
             addRenderableWidget(new Ui.PulseCategory(18, y, SIDEBAR_W - 36, 30, CATS[i], category == i,
                 b -> {
                     category = idx;
+                    contentScroll = 0;
                     rebuild();
                 }));
             y += 36;
@@ -66,6 +75,8 @@ public class DupeGuiScreen extends Screen {
             case 2 -> buildWorld(cx, cw);
             case 3 -> buildSound(cx, cw);
             case 4 -> buildMedia(cx, cw);
+            case 5 -> buildMarks(cx, cw);
+            case 6 -> buildCreators(cx, cw);
             default -> buildConsole(cx, cw);
         }
     }
@@ -87,7 +98,20 @@ public class DupeGuiScreen extends Screen {
         y += 32;
         addAction(x2, y, w2, "Выдача предметов", () -> client.setScreen(new ItemGiveScreen()));
         y += 32;
+        addAction(x2, y, w2, "Эксплоит предметов", () -> client.setScreen(new ItemExploitScreen()));
+        y += 32;
         addAction(x2, y, w2, "Поиск серверов", () -> client.setScreen(new ServerFinderScreen()));
+        y += 32;
+        addToggle(x2, y, w2, "Поиск игроков (HUD)", () -> PlayerSearch.enabled, () -> {
+            PlayerSearch.enabled = !PlayerSearch.enabled;
+            if (!PlayerSearch.enabled) {
+                PlayerSearch.setQuery("");
+            }
+        });
+        y += 32;
+        addCycle(x2, y, w2, "Мин. длина ника", () -> PlayerSearch.minLength + " симв.", () -> PlayerSearch.minLength = nextMinLen());
+        y += 32;
+        addToggle(x2, y, w2, "Streamer Mode", () -> StreamerMode.enabled, () -> StreamerMode.enabled = !StreamerMode.enabled);
         y += 32;
         addToggle(x2, y, w2, "Auto Totem", () -> AutoTotem.enabled, () -> AutoTotem.enabled = !AutoTotem.enabled);
         y += 32;
@@ -106,6 +130,13 @@ public class DupeGuiScreen extends Screen {
         y += 32;
         addToggle(x2, y, w2, "NoFall", () -> CheatModules.NoFall.enabled, () -> CheatModules.NoFall.enabled = !CheatModules.NoFall.enabled);
         y += 32;
+        addToggle(x2, y, w2, "Noclip", () -> CheatModules.Noclip.enabled, () -> {
+            CheatModules.Noclip.enabled = !CheatModules.Noclip.enabled;
+            if (!CheatModules.Noclip.enabled) {
+                CheatModules.Noclip.disable(client);
+            }
+        });
+        y += 32;
         addToggle(x2, y, w2, "ChestStealer", () -> CheatModules.ChestStealer.enabled, () -> CheatModules.ChestStealer.enabled = !CheatModules.ChestStealer.enabled);
         y += 32;
         addAction(x2, y, w2, "Список друзей", () -> client.setScreen(new FriendListScreen()));
@@ -114,8 +145,8 @@ public class DupeGuiScreen extends Screen {
         y += 32;
         addAction(x2, y, w2, "Бинды (клавиши)", () -> client.setScreen(new BindChangerScreen()));
 
-        quickCommandBox = new QuickCommandBox(client.font, cx + 2, 372, 238, 18);
-        addRenderableWidget(quickCommandBox);
+        quickCommandBox = new QuickCommandBox(client.font, cx + 2, 372 - contentScroll, 238, 18);
+        registerContent(quickCommandBox, 372);
     }
 
     private void buildVisual(int cx, int cw) {
@@ -216,7 +247,7 @@ public class DupeGuiScreen extends Screen {
 
     private int addVisSlider(int x, int y, int w, String name, float min, float max,
                              Supplier<Float> get, DoubleConsumer set, Function<Float, String> fmt) {
-        addRenderableWidget(new Ui.PulseSlider(x, y, w, 20, name, min, max, get, set, fmt));
+        registerContent(new Ui.PulseSlider(x, y - contentScroll, w, 20, name, min, max, get, set, fmt), y);
         return y + 22;
     }
 
@@ -233,12 +264,12 @@ public class DupeGuiScreen extends Screen {
         y += 38;
 
         int fw = (cw - 16) / 3;
-        tpX = new EditBox(client.font, cx, y, fw, 18, Component.literal("X"));
-        tpY = new EditBox(client.font, cx + fw + 8, y, fw, 18, Component.literal("Y"));
-        tpZ = new EditBox(client.font, cx + (fw + 8) * 2, y, fw, 18, Component.literal("Z"));
+        tpX = new EditBox(client.font, cx, y - contentScroll, fw, 18, Component.literal("X"));
+        tpY = new EditBox(client.font, cx + fw + 8, y - contentScroll, fw, 18, Component.literal("Y"));
+        tpZ = new EditBox(client.font, cx + (fw + 8) * 2, y - contentScroll, fw, 18, Component.literal("Z"));
         for (EditBox box : new EditBox[] { tpX, tpY, tpZ }) {
             box.setMaxLength(14);
-            addRenderableWidget(box);
+            registerContent(box, y);
         }
         if (client.player != null) {
             tpX.setValue(String.valueOf((int) Math.floor(client.player.getX())));
@@ -261,11 +292,30 @@ public class DupeGuiScreen extends Screen {
         y += 28;
         addAction(cx, y, cw, "Телепорт к цели (прицел)", () -> DupeModClient.tpToTarget(client));
         y += 34;
-        tpName = new EditBox(client.font, cx, y, cw, 18, Component.literal("Ник игрока"));
+        tpName = new EditBox(client.font, cx, y - contentScroll, cw, 18, Component.literal("Ник игрока"));
         tpName.setMaxLength(16);
-        addRenderableWidget(tpName);
+        registerContent(tpName, y);
         y += 24;
         addAction(cx, y, cw, "Телепорт к игроку по нику", () -> DupeModClient.tpByNick(client, tpName.getValue()));
+    }
+
+    private void buildMarks(int cx, int cw) {
+        int colW = (cw - 12) / 2;
+        int xa = cx, xb = cx + colW + 12;
+        int ya = 64, yb = 64;
+        ya = addVisToggle(xa, ya, colW, "Метки врагов", () -> WorldVisuals.enemyLabels, () -> WorldVisuals.enemyLabels = !WorldVisuals.enemyLabels);
+        yb = addVisToggle(xb, yb, colW, "Ники над головой", () -> WorldVisuals.nameTag, () -> WorldVisuals.nameTag = !WorldVisuals.nameTag);
+        ya = addVisToggle(xa, ya, colW, "Трассеры", () -> WorldVisuals.tracers, () -> WorldVisuals.tracers = !WorldVisuals.tracers);
+        yb = addVisToggle(xb, yb, colW, "Трассеры мобы", () -> WorldVisuals.tracersMobs, () -> WorldVisuals.tracersMobs = !WorldVisuals.tracersMobs);
+        ya = addVisToggle(xa, ya, colW, "Near (стрелки)", () -> WorldVisuals.near, () -> WorldVisuals.near = !WorldVisuals.near);
+        yb = addVisToggle(xb, yb, colW, "Круг прыжка", () -> WorldVisuals.jumpCircle, () -> WorldVisuals.jumpCircle = !WorldVisuals.jumpCircle);
+        ya = addVisToggle(xa, ya, colW, "Показ невидимок", () -> Features.showInvis, () -> Features.showInvis = !Features.showInvis);
+        yb = addVisToggle(xb, yb, colW, "Враги (HUD)", () -> HudRenderer.enemiesEnabled, () -> HudRenderer.enemiesEnabled = !HudRenderer.enemiesEnabled);
+        ya = addVisSlider(xa, ya, colW, "Круг радиус", 1.0f, 6.0f, () -> WorldVisuals.circleRadius, v -> WorldVisuals.circleRadius = (float) v, f -> String.format("%.1f", f));
+        if (ya < yb) {
+            ya = yb;
+        }
+        addAction(xa, ya, colW, "  Список ивентов", () -> client.setScreen(new EventsScreen()));
     }
 
     private void buildSound(int cx, int cw) {
@@ -273,6 +323,25 @@ public class DupeGuiScreen extends Screen {
         addToggle(cx, y, cw, "Усиление звука", () -> Features.soundBoost, () -> Features.soundBoost = !Features.soundBoost);
         y += 32;
         addToggle(cx, y, cw, "Тихий варден", () -> Features.quietWarden, () -> Features.quietWarden = !Features.quietWarden);
+    }
+
+    private void buildCreators(int cx, int cw) {
+        int y = 64;
+        addAction(cx, y, cw, "✚ Забрать всё", () -> {
+            boolean done = DupeModClient.transferAll(client, true);
+            message(client, done ? "Забрал всё из контейнера" : "Открой сундук/контейнер");
+        });
+        y += 32;
+        addAction(cx, y, cw, "⇩ Выложить всё", () -> {
+            boolean done = DupeModClient.transferAll(client, false);
+            message(client, done ? "Выложил всё в контейнер" : "Открой сундук/контейнер");
+        });
+    }
+
+    private static void message(Minecraft client, String text) {
+        if (client.player != null) {
+            client.player.displayClientMessage(Component.literal(text), false);
+        }
     }
 
     private void buildMedia(int cx, int cw) {
@@ -293,6 +362,8 @@ public class DupeGuiScreen extends Screen {
                 DiscordRpc.stop();
             }
         });
+        y += 32;
+        addToggle(cx, y, cw, "RPC детали (коорд.·FPS)", () -> DiscordRpc.showDetails, () -> DiscordRpc.showDetails = !DiscordRpc.showDetails);
     }
 
     private void buildConsole(int cx, int cw) {
@@ -301,18 +372,25 @@ public class DupeGuiScreen extends Screen {
     }
 
     private void addToggle(int x, int y, int w, String name, BooleanSupplier state, Runnable toggle) {
-        addRenderableWidget(new Ui.PulseRow(x, y, w, 26, name,
+        registerContent(new Ui.PulseRow(x, y - contentScroll, w, 26, name,
             state::getAsBoolean,
             () -> state.getAsBoolean() ? "ON" : "OFF",
-            toggle));
+            toggle), y);
     }
 
     private void addAction(int x, int y, int w, String name, Runnable action) {
-        addRenderableWidget(new Ui.PulseRow(x, y, w, 26, name, () -> true, () -> "▶", action));
+        registerContent(new Ui.PulseRow(x, y - contentScroll, w, 26, name, () -> true, () -> "▶", action), y);
     }
 
     private void addCycle(int x, int y, int w, String name, Supplier<String> value, Runnable cycle) {
-        addRenderableWidget(new Ui.PulseRow(x, y, w, 26, name, () -> false, value, cycle));
+        registerContent(new Ui.PulseRow(x, y - contentScroll, w, 26, name, () -> false, value, cycle), y);
+    }
+
+    private void registerContent(AbstractWidget w, int baseY) {
+        addRenderableWidget(w);
+        contentWidgets.add(w);
+        contentYs.add(baseY);
+        contentMax = Math.max(contentMax, baseY + w.getHeight());
     }
 
     private double nextRange() {
@@ -335,25 +413,81 @@ public class DupeGuiScreen extends Screen {
         return DELAYS[(i + 1) % DELAYS.length];
     }
 
+    private int nextMinLen() {
+        int[] lens = {1, 2, 3, 4, 5, 6};
+        int i = 0;
+        for (; i < lens.length; i++) {
+            if (lens[i] == PlayerSearch.minLength) {
+                break;
+            }
+        }
+        return lens[(i + 1) % lens.length];
+    }
+
     @Override
     public void render(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
-        gui.fill(0, 0, width, height, Ui.PULSE_BG);
-        gui.fill(0, 0, width, 2, Ui.PULSE_ACCENT);
+        gui.fillGradient(0, 0, width, height, 0xE6000000, 0xA6000000);
+        Font font = client.font;
+
+        gui.fill(0, 0, width, height, 0x14FFFFFF);
+        gui.fill(0, height - 1, width, height, Ui.PULSE_LINE);
+        gui.fill(0, 0, width, 1, Ui.PULSE_ACCENT);
+
+        String title = "Flash Visual";
+        Ui.gradientText(gui, font, title, 18, 14, 0xFFCFCFCF, 0xFF7A7A7A);
+        String ver = "v1.1.0-pre1";
+        gui.drawString(font, ver, width - font.width(ver) - 18, 16, 0xFF6A6A6A);
+        gui.fill(18, 47, width - 18, 48, 0x22FFFFFF);
+        gui.fill(SIDEBAR_W, 47, SIDEBAR_W + 1, height, 0x22FFFFFF);
+
+        gui.drawString(font, Component.literal(CATS[category]), 18, 60, 0xFF8A8A8A);
+
         super.render(gui, mouseX, mouseY, partialTick);
 
-        Font font = client.font;
-        gui.drawString(font, "Flash Visual", 18, 16, 0xFFFFFFFF);
-        String ver = "v1.1.0-pre1";
-        gui.drawString(font, ver, width - font.width(ver) - 18, 16, 0xFF9AA4B2);
-        gui.drawString(font, CATS[category], 18, 31, Ui.PULSE_ACCENT);
-        gui.fill(18, 46, width - 18, 47, Ui.PULSE_LINE);
-        gui.fill(SIDEBAR_W, 47, SIDEBAR_W + 1, height, Ui.PULSE_LINE);
         if (category == 0) {
             renderKeybinds(gui, font);
         }
-        if (category == 5) {
+        if (category == 7) {
             renderConsoleHelp(gui, font);
         }
+        if (category == 6) {
+            int cx = SIDEBAR_W + 20;
+            gui.drawString(font, "Создатели: deviaeostye_41139 · sasha21111", cx, 47, 0xFF8A8A8A);
+        }
+        renderScrollBar(gui);
+    }
+
+    private void renderScrollBar(GuiGraphics gui) {
+        int usable = height - 64 - 30;
+        if (contentMax <= usable) {
+            return;
+        }
+        int trackX = width - 6;
+        int trackTop = 64;
+        int trackH = usable;
+        int maxScroll = contentMax - usable;
+        int thumbH = Math.max(20, trackH * usable / contentMax);
+        int thumbY = trackTop + (trackH - thumbH) * contentScroll / maxScroll;
+        gui.fill(trackX, trackTop, trackX + 2, trackTop + trackH, 0x22FFFFFF);
+        gui.fill(trackX, thumbY, trackX + 2, thumbY + thumbH, 0xFF9A9A9A);
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+        if (mouseX <= SIDEBAR_W + 16) {
+            return false;
+        }
+        int usable = height - 64 - 30;
+        int maxScroll = Math.max(0, contentMax - usable);
+        int target = Math.max(0, Math.min(maxScroll, contentScroll - (int) Math.round(verticalAmount * 12)));
+        if (target == contentScroll) {
+            return true;
+        }
+        contentScroll = target;
+        for (int i = 0; i < contentWidgets.size(); i++) {
+            contentWidgets.get(i).setY(contentYs.get(i) - contentScroll);
+        }
+        return true;
     }
 
     private void renderConsoleHelp(GuiGraphics gui, Font font) {
@@ -371,7 +505,7 @@ public class DupeGuiScreen extends Screen {
             "Нужные права сервера не требуются — всё выполняет клиент."
         };
         for (String line : lines) {
-            gui.drawString(font, Component.literal(line), cx, y, 0xFFB6BDC9);
+            gui.drawString(font, Component.literal(line), cx, y, 0xFF9A9A9A);
             y += 12;
         }
     }
@@ -384,7 +518,7 @@ public class DupeGuiScreen extends Screen {
         int rowH = 11;
         java.util.List<String> actions = Binds.actions();
         int panelH = actions.size() * rowH + 10;
-        Ui.panel(gui, panelX, panelY, panelW, panelH, 0xC00B0F1A, Ui.PULSE_LINE);
+        Ui.panel(gui, panelX, panelY, panelW, panelH, Ui.PULSE_PANEL, Ui.PULSE_LINE);
         int kx = panelX + 6;
         for (int i = 0; i < actions.size(); i++) {
             int ky = panelY + 5 + i * rowH;
@@ -392,10 +526,10 @@ public class DupeGuiScreen extends Screen {
             String desc = Binds.label(actions.get(i));
             int capW = Math.max(30, font.width(key) + 8);
             String d = font.plainSubstrByWidth(desc, panelW - 12 - capW - 6);
-            Ui.roundRect(gui, kx, ky, capW, 11, 4, 0xFF101C30);
+            Ui.roundRect(gui, kx, ky, capW, 11, 4, 0xFF101010);
             Ui.roundRect(gui, kx, ky, capW, 11, 4, Ui.PULSE_ACCENT);
             gui.drawCenteredString(font, key, kx + capW / 2, ky + 1, Ui.PULSE_ACCENT);
-            gui.drawString(font, Component.literal(d), kx + capW + 6, ky + 2, 0xFFB6BDC9);
+            gui.drawString(font, Component.literal(d), kx + capW + 6, ky + 2, 0xFF9A9A9A);
         }
 
         int cx = SIDEBAR_W + 20;
@@ -408,7 +542,7 @@ public class DupeGuiScreen extends Screen {
             gui.fill(cx + 2, ly + 1, cx + 3, ly + 9, Ui.PULSE_ACCENT);
             gui.drawString(font, Component.literal(c[0]), cx + 10, ly, Ui.PULSE_ACCENT);
             gui.drawString(font, Component.literal("— " + c[1]),
-                cx + 10 + font.width(c[0]) + 8, ly, 0xFF9AA4B2);
+                cx + 10 + font.width(c[0]) + 8, ly, 0xFF7A7A7A);
             ly += 12;
         }
     }

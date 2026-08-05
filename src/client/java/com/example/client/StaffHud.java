@@ -45,7 +45,7 @@ public class StaffHud {
         int[] pos = HudPos.get("staff", client.getWindow().getGuiScaledWidth() - w - 6, 120);
         int x = pos[0];
         int y = pos[1];
-        Ui.panel(gui, x, y, w, panelH, 0xC00B0F1A, 0xFF1E2A3E);
+        Ui.panel(gui, x, y, w, panelH, Ui.PULSE_PANEL, Ui.PULSE_LINE);
         HudDrag.setArea("staff", x, y, w, panelH);
 
         int i = 0;
@@ -57,7 +57,7 @@ public class StaffHud {
             boolean staff = STAFF.contains(name.toLowerCase());
             int ry = y + 5 + i * rowH;
             if (staff) {
-                gui.fill(x + 4, ry + 2, x + 6, ry + rowH - 2, 0xFF00CFFF);
+                gui.fill(x + 4, ry + 2, x + 6, ry + rowH - 2, 0xFF9A9A9A);
             }
             gui.drawString(font, Component.literal(name), x + 12, ry, staff ? 0xFFFFD24A : 0xFFFFFFFF);
             int ping = pi.getLatency();

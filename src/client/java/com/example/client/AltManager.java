@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.UUID;
 
 public class AltManager {
@@ -128,5 +129,30 @@ public class AltManager {
         }
         UUID offline = UUID.nameUUIDFromBytes(("OfflinePlayer:" + active).getBytes(StandardCharsets.UTF_8));
         return new User(active, offline, "0", Optional.empty(), Optional.empty());
+    }
+
+    private static final Random RNG = new Random();
+    private static final String[] PREFIXES = {
+        "xX_", "No_", "Mr_", "Pro", "Dark", "Ghost", "Neo", "Zero", "Mega", "Ultra",
+        "Shadow", "Crystal", "Golden", "Night", "Star", "Red", "Blue", "Iron", "Alpha", "Omega"
+    };
+    private static final String[] NAMES = {
+        "Alex", "Steve", "Zombie", "Blaze", "Creeper", "Ninja", "Gamer", "Killer", "Hunter", "Wizard",
+        "Dragon", "Panda", "Wolf", "Fox", "Tiger", "Storm", "Blade", "Fury", "Void", "Prime"
+    };
+    private static final String[] SUFFIXES = {
+        "_xD", "YT", "Pro", "_2010", "2007", "MC", "GOD", "LP", "BR", "RU"
+    };
+
+    public static String randomNick() {
+        int r = RNG.nextInt(3);
+        if (r == 0) {
+            return PREFIXES[RNG.nextInt(PREFIXES.length)] + NAMES[RNG.nextInt(NAMES.length)]
+                + SUFFIXES[RNG.nextInt(SUFFIXES.length)];
+        }
+        if (r == 1) {
+            return NAMES[RNG.nextInt(NAMES.length)] + RNG.nextInt(100, 10000);
+        }
+        return "_" + NAMES[RNG.nextInt(NAMES.length)].toLowerCase() + "_" + RNG.nextInt(10, 999);
     }
 }

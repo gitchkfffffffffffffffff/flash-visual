@@ -30,6 +30,11 @@ public class AltManagerScreen extends Screen {
         addRenderableWidget(nameBox);
         addRenderableWidget(new Ui.StyledButton(cx + 68, 42, 90, 18, Component.literal("Добавить"), Ui.GREEN,
             b -> addAlt()));
+        addRenderableWidget(new Ui.StyledButton(cx - 150, 64, 158, 18, Component.literal("Случайный ник"), 0xFF4466AA,
+            b -> {
+                nameBox.setValue(AltManager.randomNick());
+                nameBox.setFocused(true);
+            }));
         addRenderableWidget(new Ui.StyledButton(cx - 150, height - 40, 150, 20, Component.literal("Назад"), 0xFF444444,
             b -> client.setScreen(new DupeGuiScreen())));
         addRenderableWidget(new Ui.StyledButton(cx + 8, height - 40, 142, 20, Component.literal("Снять выбор"), 0xFF555555,
@@ -57,7 +62,7 @@ public class AltManagerScreen extends Screen {
         rowWidgets.clear();
         int cx = width / 2;
         int x = cx - 150, w = 300;
-        int y = 72;
+        int y = 90;
         for (String alt : AltManager.getAlts()) {
             boolean active = alt.equals(AltManager.getActive());
             RowWidget row = new RowWidget(x, y, w, 22, alt, active);
@@ -111,10 +116,10 @@ public class AltManagerScreen extends Screen {
         protected void renderContents(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
             int x = getX(), y = getY(), w = getWidth(), h = getHeight();
             boolean hover = isHoveredOrFocused();
-            gui.fill(x, y, x + w, y + h, active ? 0xFF13243C : (hover ? 0xFF141A28 : 0xFF0E1420));
-            gui.fill(x, y, x + 3, y + h, active ? Ui.PULSE_ACCENT : 0xFF253047);
+            gui.fill(x, y, x + w, y + h, active ? 0x53131313 : (hover ? 0x30131313 : 0x2E101010));
+            gui.fill(x, y, x + 3, y + h, active ? Ui.PULSE_ACCENT : 0xFF2A2A2A);
             Font font = Minecraft.getInstance().font;
-            gui.drawString(font, getMessage(), x + 12, y + (h - 8) / 2, active ? 0xFFFFFFFF : 0xFFB6BDC9);
+            gui.drawString(font, getMessage(), x + 12, y + (h - 8) / 2, active ? 0xFFFFFFFF : 0xFF9A9A9A);
             if (active) {
                 String tag = "ВЫБРАН";
                 gui.drawString(font, tag, x + w - 34 - font.width(tag), y + (h - 8) / 2, Ui.GREEN);
@@ -141,8 +146,8 @@ public class AltManagerScreen extends Screen {
         protected void renderContents(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
             int x = getX(), y = getY(), w = getWidth(), h = getHeight();
             boolean hover = isHoveredOrFocused();
-            gui.fill(x, y, x + w, y + h, hover ? 0xFF4A1F2A : 0xFF141A28);
-            gui.renderOutline(x, y, w, h, hover ? Ui.RED : 0xFF4A3A3A);
+            gui.fill(x, y, x + w, y + h, hover ? 0x4A222222 : 0x2E101010);
+            gui.renderOutline(x, y, w, h, hover ? Ui.RED : 0xFF3A3A3A);
             Font font = Minecraft.getInstance().font;
             gui.drawCenteredString(font, "✕", x + w / 2, y + (h - 8) / 2, hover ? 0xFFFFFFFF : 0xFFFF8888);
         }

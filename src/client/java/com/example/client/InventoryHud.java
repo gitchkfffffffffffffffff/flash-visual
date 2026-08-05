@@ -22,10 +22,12 @@ public class InventoryHud {
         Inventory inv = client.player.getInventory();
 
         int gridW = GRID_COLS * TILE;
-        int panelW = PAD + ARMOR_COLS * TILE + 6 + gridW + PAD;
+        int panelW = PAD + ARMOR_COLS * TILE + 6 + gridW + 6 + TILE + PAD;
         int panelH = PAD * 2 + ROWS * TILE;
 
-        Ui.panel(gui, x, y, panelW, panelH, 0xC00B0F1A, 0xFF1E2A3E);
+        Ui.panel(gui, x, y, panelW, panelH, Ui.PULSE_PANEL, Ui.PULSE_LINE);
+        int accent = Ui.PULSE_ACCENT;
+        gui.fillGradient(x, y, x + panelW, y + 2, accent, (accent & 0x00FFFFFF));
         HudDrag.setArea("inventory", x, y, panelW, panelH);
 
         int gx = x + PAD + ARMOR_COLS * TILE + 6;
@@ -46,15 +48,18 @@ public class InventoryHud {
         for (int c = 0; c < GRID_COLS; c++) {
             drawSlot(gui, client.font, inv.getItem(c), gx + c * TILE, gy + (ROWS - 1) * TILE);
         }
-        drawSlot(gui, client.font, inv.getItem(40), gx + GRID_COLS * TILE, gy + (ROWS - 1) * TILE);
+        drawSlot(gui, client.font, inv.getItem(40), gx + GRID_COLS * TILE + 6, gy + (ROWS - 1) * TILE);
     }
 
     private static void drawSlot(GuiGraphics gui, Font font, ItemStack stack, int sx, int sy) {
-        gui.fill(sx, sy, sx + SLOT, sy + SLOT, 0x66111B2E);
-        gui.renderOutline(sx, sy, SLOT, SLOT, 0xFF1E2A3E);
+        int r = 5;
+        Ui.roundRect(gui, sx - 1, sy - 1, SLOT + 2, SLOT + 2, r, Ui.PULSE_LINE);
+        Ui.roundRect(gui, sx, sy, SLOT, SLOT, r, 0x8C000000);
+        gui.fillGradient(sx, sy, sx + SLOT, sy + 3, 0x22000000, 0x00000000);
         if (!stack.isEmpty()) {
-            gui.renderItem(stack, sx, sy);
-            gui.renderItemDecorations(font, stack, sx, sy);
+            gui.renderItem(stack, sx + 1, sy + 1);
+            gui.renderItemDecorations(font, stack, sx + 1, sy + 1);
         }
+        gui.fill(sx + 1, sy + 1, sx + SLOT - 1, sy + 2, 0x1EFFFFFF);
     }
 }

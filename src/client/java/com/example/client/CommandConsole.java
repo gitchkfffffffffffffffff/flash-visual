@@ -46,13 +46,13 @@ public class CommandConsole extends Screen {
 
     @Override
     public void render(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
-        gui.fill(0, 0, width, height, 0xFF0B0F1A);
+        gui.fill(0, 0, width, height, 0xFF0A0A0A);
         gui.fill(0, 0, width, 2, Ui.PULSE_ACCENT);
         Font font = client.font;
 
         gui.drawString(font, "Консоль команд", 12, 8, 0xFFFFFFFF);
         String hint = "Enter — выполнить · Уп/Вниз — история · колесо — скролл · Esc — назад";
-        gui.drawString(font, hint, width - font.width(hint) - 12, 8, 0xFF9AA4B2);
+        gui.drawString(font, hint, width - font.width(hint) - 12, 8, 0xFF7A7A7A);
         gui.fill(12, 22, width - 12, 23, Ui.PULSE_LINE);
 
         int top = 30;
@@ -152,7 +152,8 @@ public class CommandConsole extends Screen {
             log("Команды: tp <x y z|ник> · tptarget · ghost · freecam ·");
             log("killaura · scaffold · autototem · fullbright · time <day|night|off> ·");
             log("esp <player|mob|item|off> · house · rpc · suit · zhiguli · zvit ·");
-            log("music · target · watermark · fps · invis · fognr · cls · help");
+            log("music · target · watermark · fps · invis · fognr · find <ник> ·");
+            log("findoff · findmin <n> · streamer · cfgsave · cfgload · cls · help");
             return;
         }
         if (name.equals("cls") || name.equals("clear")) {
@@ -283,6 +284,42 @@ public class CommandConsole extends Screen {
             case "fognr" -> {
                 Features.noRender = !Features.noRender;
                 log("on:noRender " + (Features.noRender ? "on" : "off"));
+            }
+            case "find" -> {
+                if (arg.isEmpty()) {
+                    log("err: укажи ник, например: find Notch");
+                    return;
+                }
+                PlayerSearch.enabled = true;
+                PlayerSearch.setQuery(arg);
+                PlayerSearch.refresh(client);
+                log("OK: поиск «" + arg + "» — " + PlayerSearch.resultCount() + " игроков");
+            }
+            case "findoff" -> {
+                PlayerSearch.enabled = false;
+                PlayerSearch.setQuery("");
+                log("OK: поиск выключен");
+            }
+            case "findmin" -> {
+                try {
+                    int n = Integer.parseInt(arg.trim());
+                    PlayerSearch.minLength = Math.max(1, Math.min(16, n));
+                    log("OK: мин. длина ника = " + PlayerSearch.minLength);
+                } catch (NumberFormatException ex) {
+                    log("err: нужна цифра");
+                }
+            }
+            case "streamer" -> {
+                StreamerMode.enabled = !StreamerMode.enabled;
+                log("OK: " + StreamerMode.statusLine());
+            }
+            case "cfgsave" -> {
+                Config.save();
+                log("OK: конфиг сохранён");
+            }
+            case "cfgload" -> {
+                Config.load();
+                log("OK: конфиг загружен");
             }
             default -> {
                 if (client.getConnection() == null) {

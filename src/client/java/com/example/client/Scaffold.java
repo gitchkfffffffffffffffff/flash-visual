@@ -41,20 +41,51 @@ public class Scaffold {
         if (slot < 0) {
             return;
         }
-        player.getInventory().setSelectedSlot(slot);
+        if (player.getInventory().getSelectedSlot() != slot) {
+            player.getInventory().setSelectedSlot(slot);
+        }
 
         Level level = player.level();
+        BlockHitResult hit = findPlaceHit(level, target, player);
+        if (hit == null) {
+            return;
+        }
+        player.lookAt(EntityAnchorArgument.Anchor.EYES, hit.getLocation());
+        client.gameMode.useItemOn(player, InteractionHand.MAIN_HAND, hit);
+        player.swing(InteractionHand.MAIN_HAND);
+    }
+
+    private static BlockHitResult findPlaceHit(Level level, BlockPos target, LocalPlayer player) {
+        BlockPos best = null;
+        double bestDist = Double.MAX_VALUE;
         for (Direction d : Direction.values()) {
             BlockPos neighbor = target.relative(d);
             BlockState state = level.getBlockState(neighbor);
             if (level.isLoaded(neighbor) && !state.isAir() && state.getFluidState().isEmpty()) {
-                player.lookAt(EntityAnchorArgument.Anchor.EYES, Vec3.atCenterOf(neighbor));
-                BlockHitResult hit = new BlockHitResult(Vec3.atCenterOf(neighbor), d.getOpposite(), neighbor, false);
-                client.gameMode.useItemOn(player, InteractionHand.MAIN_HAND, hit);
-                player.swing(InteractionHand.MAIN_HAND);
-                return;
+                double dist = neighbor.distToCenterSqr(player.getX(), player.getY(), player.getZ());
+                if (dist < bestDist) {
+                    bestDist = dist;
+                    best = neighbor;
+                }
             }
         }
+        if (best == null) {
+            return null;
+        }
+        Direction face = null;
+        int dx = best.getX() - target.getX();
+        int dy = best.getY() - target.getY();
+        int dz = best.getZ() - target.getZ();
+        for (Direction d : Direction.values()) {
+            if (d.getStepX() == dx && d.getStepY() == dy && d.getStepZ() == dz) {
+                face = d;
+                break;
+            }
+        }
+        if (face == null) {
+            face = Direction.UP;
+        }
+        return new BlockHitResult(Vec3.atCenterOf(best), face.getOpposite(), best, false);
     }
 
     private static BlockPos findTargetPos(LocalPlayer player) {
@@ -64,8 +95,17 @@ public class Scaffold {
         if (level.getBlockState(under).isAir()) {
             return under;
         }
+        boolean jumping = player.input.keyPresses.jump() && !player.onGround();
+        if (jumping) {
+            return feet;
+        }
         Vec3 look = player.getLookAngle();
-        BlockPos ahead = feet.offset((int) Math.round(look.x), -1, (int) Math.round(look.z));
+        int dx = (int) Math.round(look.x);
+        int dz = (int) Math.round(look.z);
+        if (dx == 0 && dz == 0) {
+            return null;
+        }
+        BlockPos ahead = feet.offset(dx, -1, dz);
         if (!ahead.equals(under) && level.getBlockState(ahead).isAir()) {
             return ahead;
         }

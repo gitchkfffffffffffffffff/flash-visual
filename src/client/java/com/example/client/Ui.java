@@ -13,17 +13,17 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class Ui {
-    public static final int ACCENT = 0xFFFFAA00;
-    public static final int PANEL = 0xD0121212;
-    public static final int GREEN = 0xFF2ECC40;
-    public static final int RED = 0xFFFF4136;
-    public static final int CYAN = 0xFF00D0FF;
-    public static final int PURPLE = 0xFFB44AFF;
+    public static final int ACCENT = 0xFF9A9A9A;
+    public static final int PANEL = 0xFF101010;
+    public static final int GREEN = 0xFF8CC08C;
+    public static final int RED = 0xFFFF6B6B;
+    public static final int CYAN = 0xFFA0A0A0;
+    public static final int PURPLE = 0xFF9A9A9A;
 
     public static int PULSE_BG = 0xFF000000;
-    public static int PULSE_PANEL = 0xC0000000;
-    public static int PULSE_ACCENT = 0xFF00CFFF;
-    public static int PULSE_LINE = 0xFF22242A;
+    public static int PULSE_PANEL = 0xF0000000;
+    public static int PULSE_ACCENT = 0xFF9A9A9A;
+    public static int PULSE_LINE = 0xFF3A3A3A;
 
     public static void applyAccent(int accent) {
         PULSE_ACCENT = accent;
@@ -119,17 +119,17 @@ public class Ui {
         @Override
         protected void renderContents(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
             int x = getX(), y = getY(), w = getWidth(), h = getHeight();
-            int r = 6;
+            int r = Math.min(9, Math.min(w, h) / 2);
             int bg, line;
             if (!active) {
                 bg = 0x44111111;
                 line = 0xFF333333;
             } else if (isHoveredOrFocused()) {
-                bg = 0xFF000000 | mix(accent & 0xFFFFFF, 0xFFFFFF, 0.30f);
-                line = 0xFFFFFFFF;
+                bg = 0xFF1A1A1A;
+                line = 0xFFCFCFCF;
             } else {
-                bg = 0xB0000000 | (accent & 0xFFFFFF);
-                line = accent;
+                bg = 0xE6161616;
+                line = 0xFF7A7A7A;
             }
             roundRect(gui, x, y, w, h, r, bg);
             roundRect(gui, x, y, w, h, r, line);
@@ -173,10 +173,12 @@ public class Ui {
         @Override
         protected void renderContents(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
             int x = getX(), y = getY(), w = getWidth(), h = getHeight();
-            roundRect(gui, x, y, w, h, 6, 0xFF0E1420);
-            roundRect(gui, x, y, 3, h, 6, PULSE_ACCENT);
+            int r = Math.min(9, Math.min(w, h) / 2);
+            roundRect(gui, x, y, w, h, r, 0xE6101010);
+            roundRect(gui, x, y, w, h, r, 0x2AFFFFFF);
+            roundRect(gui, x, y, 2, h, r, PULSE_ACCENT);
             Font font = Minecraft.getInstance().font;
-            gui.drawString(font, getMessage(), x + 13, y + (h - 8) / 2, 0xFFB6BDC9);
+            gui.drawString(font, getMessage(), x + 13, y + (h - 8) / 2, 0xFFCFCFCF);
             String right = fmt.apply(getter.get());
             int rw = font.width(right);
             int trackX = x + 13 + font.width(getMessage()) + 10;
@@ -185,12 +187,12 @@ public class Ui {
                 trackW = 10;
             }
             int trackY = y + h / 2 - 1;
-            roundRect(gui, trackX, trackY, trackW, 2, 1, 0xFF253047);
+            roundRect(gui, trackX, trackY, trackW, 2, 1, 0xFF2A2A2A);
             float t = Math.max(0, Math.min(1, (getter.get() - min) / Math.max(0.0001f, max - min)));
             int fill = (int) (trackW * t);
             roundRect(gui, trackX, trackY, fill, 2, 1, PULSE_ACCENT);
-            roundRect(gui, trackX + fill - 2, y + 4, 4, h - 8, 2, 0xFFFFFFFF);
-            gui.drawString(font, right, x + w - rw - 10, y + (h - 8) / 2, PULSE_ACCENT);
+            roundRect(gui, trackX + fill - 2, y + 4, 4, h - 8, 2, 0xFFCFCFCF);
+            gui.drawString(font, right, x + w - rw - 10, y + (h - 8) / 2, 0xFFCFCFCF);
         }
     }
 
@@ -217,20 +219,20 @@ public class Ui {
         protected void renderContents(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
             boolean on = enabled.get();
             int x = getX(), y = getY(), w = getWidth(), h = getHeight();
-            int r = 6;
+            int r = Math.min(9, Math.min(w, h) / 2);
             int bg;
             if (on) {
-                bg = isHoveredOrFocused() ? 0xFF14263F : 0xFF101C30;
+                bg = isHoveredOrFocused() ? 0x55131313 : 0x53101010;
             } else {
-                bg = isHoveredOrFocused() ? 0xFF141A28 : 0xFF0E1420;
+                bg = isHoveredOrFocused() ? 0x30131313 : 0x2E101010;
             }
             roundRect(gui, x, y, w, h, r, bg);
-            roundRect(gui, x, y, 3, h, r, on ? PULSE_ACCENT : 0xFF253047);
+            gui.fill(x, y + 3, x + 1, y + h - 3, on ? PULSE_ACCENT : 0xFF252525);
             Font font = Minecraft.getInstance().font;
-            gui.drawString(font, getMessage(), x + 13, y + (h - 8) / 2, on ? 0xFFFFFFFF : 0xFFB6BDC9);
+            gui.drawString(font, getMessage(), x + 10, y + (h - 8) / 2, on ? 0xFFFFFFFF : 0xFF9A9A9A);
             String right = rightText.get();
-            gui.drawString(font, right, x + w - font.width(right) - 12, y + (h - 8) / 2,
-                on ? PULSE_ACCENT : 0xFF556070);
+            gui.drawString(font, right, x + w - font.width(right) - 10, y + (h - 8) / 2,
+                on ? 0xFFCFCFCF : 0xFF6A6A6A);
         }
     }
 
@@ -245,12 +247,12 @@ public class Ui {
         @Override
         protected void renderContents(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
             int x = getX(), y = getY(), w = getWidth(), h = getHeight();
-            int r = 6;
-            int bg = active ? 0xFF13243C : (isHoveredOrFocused() ? 0xFF131B2C : 0xFF0E1524);
+            int r = Math.min(12, Math.min(w, h) / 2);
+            int bg = active ? 0xE6181818 : (isHoveredOrFocused() ? 0x30131313 : 0x00101010);
             roundRect(gui, x, y, w, h, r, bg);
-            roundRect(gui, x, y, 2, h, r, active ? PULSE_ACCENT : 0xFF253047);
+            gui.fill(x, y + 5, x + 2, y + h - 5, active ? PULSE_ACCENT : 0x2A2A2A);
             Font font = Minecraft.getInstance().font;
-            gui.drawString(font, getMessage(), x + 11, y + (h - 8) / 2, active ? 0xFF00CFFF : 0xFF9AA4B2);
+            gui.drawString(font, getMessage(), x + 14, y + (h - 8) / 2, active ? 0xFFFFFFFF : 0xFF7A7A7A);
         }
     }
 }

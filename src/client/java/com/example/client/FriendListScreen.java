@@ -146,8 +146,8 @@ public class FriendListScreen extends Screen {
         protected void renderContents(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
             int x = getX(), y = getY(), w = getWidth(), h = getHeight();
             boolean hover = isHoveredOrFocused();
-            gui.fill(x, y, x + w, y + h, hover ? 0xFF4A1F2A : 0xFF141A28);
-            gui.renderOutline(x, y, w, h, hover ? Ui.RED : 0xFF4A3A3A);
+            gui.fill(x, y, x + w, y + h, hover ? 0x4A222222 : 0x2E101010);
+            gui.renderOutline(x, y, w, h, hover ? Ui.RED : 0xFF3A3A3A);
             Font font = Minecraft.getInstance().font;
             gui.drawCenteredString(font, "✕", x + w / 2, y + (h - 8) / 2, hover ? 0xFFFFFFFF : 0xFFFF8888);
         }

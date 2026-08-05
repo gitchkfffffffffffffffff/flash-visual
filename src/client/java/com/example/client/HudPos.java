@@ -15,6 +15,10 @@ public class HudPos {
         return p;
     }
 
+    public static void set(String name, int[] pos) {
+        POS.put(name, pos);
+    }
+
     public static void reset() {
         POS.clear();
     }

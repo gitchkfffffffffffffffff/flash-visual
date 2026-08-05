@@ -367,7 +367,7 @@ public class ServerFinderScreen extends Screen {
             case STATE_ONLINE -> 0xFFFFAA00;
             case STATE_ONLINE_EMPTY -> Ui.GREEN;
             case STATE_OFFLINE -> 0xFF444444;
-            default -> 0xFF00CFFF;
+            default -> 0xFF9A9A9A;
         };
     }
 }

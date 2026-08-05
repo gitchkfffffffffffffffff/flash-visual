@@ -89,10 +89,10 @@ public class BindChangerScreen extends Screen {
             boolean listeningThis = action.equals(listening);
             int x = getX(), y = getY(), w = getWidth(), h = getHeight();
             boolean hover = isHoveredOrFocused();
-            gui.fill(x, y, x + w, y + h, listeningThis ? 0xFF13243C : (hover ? 0xFF141A28 : 0xFF0E1420));
-            gui.fill(x, y, x + 3, y + h, listeningThis ? Ui.PULSE_ACCENT : 0xFF253047);
+            gui.fill(x, y, x + w, y + h, listeningThis ? 0x53131313 : (hover ? 0x30131313 : 0x2E101010));
+            gui.fill(x, y, x + 3, y + h, listeningThis ? Ui.PULSE_ACCENT : 0xFF2A2A2A);
             Font font = Minecraft.getInstance().font;
-            gui.drawString(font, getMessage(), x + 12, y + (h - 8) / 2, listeningThis ? 0xFFFFFFFF : 0xFFB6BDC9);
+            gui.drawString(font, getMessage(), x + 12, y + (h - 8) / 2, listeningThis ? 0xFFFFFFFF : 0xFF9A9A9A);
             String key = listeningThis ? "…" : Binds.keyName(action);
             gui.drawString(font, key, x + w - font.width(key) - 12, y + (h - 8) / 2, Ui.PULSE_ACCENT);
         }

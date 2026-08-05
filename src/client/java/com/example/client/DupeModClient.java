@@ -2,6 +2,7 @@ package com.example.client;
 
 import com.example.DupeHelloPayload;
 import com.example.DupeHelper;
+import com.example.DupeTpPayload;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents;
@@ -65,12 +66,15 @@ public class DupeModClient implements ClientModInitializer {
     private static boolean pendingChestOpen = false;
     private static int pendingChestTicks = 0;
     private static int rpcTick = 0;
+    private static int saveTick = 0;
     public static volatile boolean serverHasMod = false;
 
     @Override
     public void onInitializeClient() {
         DiscordRpc.init();
+        SmtcReader.start();
         AltManager.load(Minecraft.getInstance());
+        Config.load();
         HudRenderCallback.EVENT.register((gui, delta) ->
             HudRenderer.render(gui, delta, Minecraft.getInstance())
         );
@@ -79,6 +83,7 @@ public class DupeModClient implements ClientModInitializer {
             serverHasMod = true;
         });
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            Config.save();
             serverHasMod = false;
             pendingChestOpen = false;
             DupeChestScreen.clearBound();
@@ -150,7 +155,13 @@ public class DupeModClient implements ClientModInitializer {
             Scaffold.tick(client);
             HouseBuilder.tick(client);
             AutoTotem.tick(client);
+            ItemExploit.tick(client);
             updateDiscordPresence(client);
+
+            if (++saveTick >= 300) {
+                saveTick = 0;
+                Config.save();
+            }
 
             boolean isF6Down = GLFW.glfwGetKey(handle, Binds.get(Binds.FREECAM)) == GLFW.GLFW_PRESS;
             if (inGame && isF6Down && !wasF6Down) {
@@ -357,22 +368,34 @@ public class DupeModClient implements ClientModInitializer {
             details = "Flash Visual";
             state = dimensionName(client);
         }
-        if (client.player != null) {
+        if (client.player != null && DiscordRpc.showDetails) {
+            StringBuilder sbState = new StringBuilder();
+            String base = state;
+            sbState.append(base);
+            sbState.append(" · ").append(dimensionName(client));
+            sbState.append(" · ").append("X").append((int) Math.floor(client.player.getX()))
+                .append(" Y").append((int) Math.floor(client.player.getY()))
+                .append(" Z").append((int) Math.floor(client.player.getZ()));
+            int fps = HudRenderer.getLastFps();
+            if (fps > 0) {
+                sbState.append(" · ").append(fps).append(" FPS");
+            }
             if (KillAura.enabled) {
-                state += " · KillAura";
+                sbState.append(" · KillAura");
             }
             if (Scaffold.enabled) {
-                state += " · Scaffold";
+                sbState.append(" · Scaffold");
             }
             if (AutoTotem.enabled) {
-                state += " · AutoTotem";
+                sbState.append(" · AutoTotem");
             }
             if (Features.customFog) {
-                state += " · Fog";
+                sbState.append(" · Fog");
             }
             if (Fullbright.enabled) {
-                state += " · Fullbright";
+                sbState.append(" · Fullbright");
             }
+            state = sbState.length() > 128 ? sbState.substring(0, 128) : sbState.toString();
         }
         DiscordRpc.update(details, state);
     }
@@ -443,8 +466,15 @@ public class DupeModClient implements ClientModInitializer {
         }
         client.player.setPos(x, y, z);
         client.player.setDeltaMovement(0.0, 0.0, 0.0);
-        if (client.getConnection() != null) {
-            client.getConnection().send(new ServerboundMovePlayerPacket.Pos(x, y, z, false, true));
+        if (serverHasMod) {
+            if (client.getConnection() != null) {
+                ClientPlayNetworking.send(new DupeTpPayload(x, y, z, ""));
+            }
+        } else if (client.getConnection() != null) {
+            int packets = 5;
+            for (int i = 0; i < packets; i++) {
+                client.getConnection().send(new ServerboundMovePlayerPacket.Pos(x, y, z, false, true));
+            }
         }
         client.player.displayClientMessage(Component.literal("ТП: " + (int) Math.floor(x) + " " + (int) Math.floor(y) + " " + (int) Math.floor(z)), false);
     }
@@ -459,6 +489,12 @@ public class DupeModClient implements ClientModInitializer {
 
     public static void tpByNick(Minecraft client, String nick) {
         if (client.player == null || client.level == null) {
+            return;
+        }
+        if (serverHasMod) {
+            if (client.getConnection() != null) {
+                ClientPlayNetworking.send(new DupeTpPayload(0, 0, 0, nick.trim()));
+            }
             return;
         }
         String q = nick.trim().toLowerCase();
@@ -536,7 +572,11 @@ public class DupeModClient implements ClientModInitializer {
         return true;
     }
 
-    private static boolean transferAll(Minecraft client, boolean withdraw) {
+    public static boolean transferAll(Minecraft client, boolean withdraw) {
+        return transferAllPrivate(client, withdraw);
+    }
+
+    private static boolean transferAllPrivate(Minecraft client, boolean withdraw) {
         if (client.player == null) {
             return false;
         }

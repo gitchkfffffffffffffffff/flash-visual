@@ -75,7 +75,7 @@ public class EventsScreen extends Screen {
         Font font = client.font;
         gui.drawString(font, "Список ивентов", 18, 16, 0xFFFFFFFF);
         String hint = "клик — вкл/выкл · колесо — скролл · Esc — назад";
-        gui.drawString(font, hint, width - font.width(hint) - 18, 16, 0xFF9AA4B2);
+        gui.drawString(font, hint, width - font.width(hint) - 18, 16, 0xFF7A7A7A);
         gui.fill(18, 30, width - 18, 31, Ui.PULSE_LINE);
 
         int colW = (width - 48) / COLS;
@@ -109,7 +109,7 @@ public class EventsScreen extends Screen {
 
         gui.drawString(font, entries.size() + " ивентов · колёсико для скролла",
             width / 2 - font.width(entries.size() + " ивентов · колёсико для скролла") / 2,
-            height - 18, 0xFF9AA4B2);
+            height - 18, 0xFF7A7A7A);
     }
 
     @Override

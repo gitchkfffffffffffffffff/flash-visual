@@ -1,6 +1,7 @@
 package com.example.client.mixin;
 
 import com.example.client.Features;
+import com.example.client.ScreenAccessor;
 import com.example.client.Ui;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -14,18 +15,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(TitleScreen.class)
 public abstract class TitleScreenMixin {
-    private static final int P = 56;
+    private static final int P = 40;
     private static final float[] PX = new float[P];
     private static final float[] PY = new float[P];
     private static final float[] PV = new float[P];
     private static final float[] PH = new float[P];
     private static final int[] PT = new int[P];
     private static boolean inited = false;
-
-    @org.spongepowered.asm.mixin.gen.Invoker("addRenderableWidget")
-    protected abstract <T extends net.minecraft.client.gui.components.events.GuiEventListener
-        & net.minecraft.client.gui.components.Renderable & net.minecraft.client.gui.narration.NarratableEntry>
-        T invokeAddRenderableWidget(T widget);
 
     @Inject(method = "init", at = @At("TAIL"))
     private void flashVisual$layout(CallbackInfo ci) {
@@ -46,7 +42,7 @@ public abstract class TitleScreenMixin {
             aw.setY(y);
             y += 24;
         }
-        invokeAddRenderableWidget(new Ui.StyledButton(24, y + 4, 180, 20, Component.literal("Альт менеджер"),
+        ((ScreenAccessor) self).flashVisual$addRenderableWidget(new Ui.StyledButton(24, y + 4, 180, 20, Component.literal("Альт менеджер"),
             Ui.PULSE_ACCENT, b -> Minecraft.getInstance().setScreen(new com.example.client.AltManagerScreen())));
     }
 
@@ -60,14 +56,12 @@ public abstract class TitleScreenMixin {
         int w = gui.guiWidth();
         int h = gui.guiHeight();
         long t = System.currentTimeMillis();
-        float phase = (t % 12000L) / 12000f;
-        int[] accent = blend3(phase, 0xFF00CFFF, 0xFFB44AFF, 0xFFFFAA00);
-        int ar = accent[0], ag = accent[1], ab = accent[2];
-        int top = rgb(8, 11, 20);
-        int bottom = rgb(Math.min(255, ar / 6 + 10), Math.min(255, ag / 6 + 14), Math.min(255, ab / 6 + 26));
-        gui.fillGradient(0, 0, w, h, top, bottom);
-        gui.fillGradient(0, 0, w, 120, (0x22 << 24) | (ar << 16) | (ag << 8) | ab, 0x00000000);
-        int grid = (0x08 << 24) | 0x00CFFF;
+        float phase = (t % 16000L) / 16000f;
+        int[] a1 = blend3(phase, 0xFF2E2E2E, 0xFF141414, 0xFF3A3A3A);
+        gui.fillGradient(0, 0, w, h, rgb(a1[0], a1[1], a1[2]), rgb(5, 5, 5));
+
+        gui.fillGradient(0, 0, w, h, 0x12FFFFFF, 0x00000000);
+        int grid = 0x0A8A8A8A;
         for (int x = 0; x < w; x += 48) {
             gui.fill(x, 0, x + 1, h, grid);
         }
@@ -85,25 +79,34 @@ public abstract class TitleScreenMixin {
         int h = gui.guiHeight();
         long t = System.currentTimeMillis();
 
-        gui.fillGradient(0, 24, w, 112, 0xD80B0F1A, 0x550B0F1A);
         Font font = Minecraft.getInstance().font;
         String title = "Flash Visual";
         String ver = "v1.1.0-pre1";
         int tw = font.width(title);
         int tx = (w - tw) / 2;
-        float phase = (t % 12000L) / 12000f;
-        int[] accent = blend3(phase, 0xFF00CFFF, 0xFFB44AFF, 0xFFFFAA00);
+        float phase = (t % 16000L) / 16000f;
+        int[] accent = blend3(phase, 0xFFCFCFCF, 0xFF9A9A9A, 0xFF6A6A6A);
         int accentCol = rgb(accent[0], accent[1], accent[2]);
 
-        int glow = (0x46 << 24) | (accentCol & 0xFFFFFF);
-        gui.drawString(font, title, tx - 2, 44, glow);
-        gui.drawString(font, title, tx + 2, 44, glow);
-        gui.drawString(font, title, tx, 42, glow);
-        Ui.gradientText(gui, font, title, tx, 44, 0xFFFF8800, 0xFF00CFFF);
+        Ui.panel(gui, tx - 70, 30, tw + 140, 54, 0xCC111111, accentCol);
 
-        gui.fill((w - 120) / 2, 60, (w + 120) / 2, 61, accentCol);
+        int glow = (0x38 << 24) | (accentCol & 0xFFFFFF);
+        for (int ox = -3; ox <= 3; ox++) {
+            for (int oy = -3; oy <= 3; oy++) {
+                if (ox * ox + oy * oy <= 9) {
+                    gui.drawString(font, title, tx + ox, 42 + oy, glow);
+                }
+            }
+        }
+        gui.drawString(font, title, tx + 1, 43, 0x66000000);
+        Ui.gradientText(gui, font, title, tx, 42, 0xFFFFFFFF, 0xFF8A8A8A);
+
+        int lineW = tw + 60;
+        int lineX = (w - lineW) / 2;
+        gui.fillGradient(lineX, 62, lineX + lineW / 2, 63, accentCol, 0x33FFFFFF);
+        gui.fillGradient(lineX + lineW / 2, 62, lineX + lineW, 63, 0x33FFFFFF, accentCol);
         int vw = font.width(ver);
-        gui.drawString(font, ver, (w - vw) / 2, 66, 0xFF9AA4B2);
+        gui.drawString(font, ver, (w - vw) / 2, 68, 0xFF8A8A8A);
 
         drawParticles(gui, w, h, t);
         drawVignette(gui, w, h);
@@ -112,10 +115,13 @@ public abstract class TitleScreenMixin {
         if (nick == null || nick.isEmpty()) {
             nick = Minecraft.getInstance().getUser().getName();
         }
+        if (com.example.client.StreamerMode.ownNick(Minecraft.getInstance()) != null) {
+            nick = "Игрок";
+        }
         if (nick != null && !nick.isEmpty()) {
             int nx = 14;
             int ny = 14;
-            Ui.panel(gui, nx - 6, ny - 3, font.width(nick) + 12, 12, 0xAA0B0F1A, accentCol);
+            Ui.panel(gui, nx - 6, ny - 3, font.width(nick) + 12, 12, 0xAA101010, accentCol);
             gui.drawString(font, Component.literal(nick), nx, ny, 0xFFFFFFFF);
         }
     }
@@ -126,12 +132,15 @@ public abstract class TitleScreenMixin {
             for (int i = 0; i < P; i++) {
                 PX[i] = (float) Math.random();
                 PY[i] = (float) Math.random();
-                PV[i] = 0.010f + (float) Math.random() * 0.02f;
+                PV[i] = 0.008f + (float) Math.random() * 0.018f;
                 PH[i] = (float) (Math.random() * Math.PI * 2);
-                PT[i] = Math.random() < 0.5 ? 0xFF00CFFF : 0xFFFFAA00;
+                PT[i] = Math.random() < 0.5 ? 0xFFCFCFCF : 0xFF7A7A7A;
             }
         }
         float time = t / 1000f;
+        int[] xs = new int[P];
+        int[] ys = new int[P];
+        int[] alpha = new int[P];
         for (int i = 0; i < P; i++) {
             PY[i] -= PV[i];
             PX[i] += (float) Math.sin(time * 0.8f + PH[i]) * 0.0008f;
@@ -144,10 +153,28 @@ public abstract class TitleScreenMixin {
             } else if (PX[i] > 1.02f) {
                 PX[i] = 0;
             }
-            int alpha = 0x38 + (int) (0x28 * (0.5 + 0.5 * Math.sin(time * 1.5f + PH[i])));
-            int col = (alpha << 24) | (PT[i] & 0xFFFFFF);
-            int x = (int) (PX[i] * w);
-            int y = (int) (PY[i] * h);
+            alpha[i] = 0x38 + (int) (0x28 * (0.5 + 0.5 * Math.sin(time * 1.5f + PH[i])));
+            xs[i] = (int) (PX[i] * w);
+            ys[i] = (int) (PY[i] * h);
+        }
+        for (int i = 0; i < P; i++) {
+            for (int j = i + 1; j < P; j++) {
+                int dx = xs[i] - xs[j];
+                int dy = ys[i] - ys[j];
+                int d2 = dx * dx + dy * dy;
+                if (d2 < 170 * 170) {
+                    int lc = (0x1A << 24) | ((0x9A9A9A) & 0xFFFFFF);
+                    if (d2 < 90 * 90) {
+                        lc = (0x2E << 24) | ((0xCFCFCF) & 0xFFFFFF);
+                    }
+                    gui.fill(xs[i], ys[i], xs[j], ys[j] + 1, lc);
+                }
+            }
+        }
+        for (int i = 0; i < P; i++) {
+            int col = (alpha[i] << 24) | (PT[i] & 0xFFFFFF);
+            int x = xs[i];
+            int y = ys[i];
             gui.fill(x, y, x + 1, y + 1, col);
             gui.fill(x + 1, y + 1, x + 2, y + 2, (col & 0x7FFFFFFF));
         }

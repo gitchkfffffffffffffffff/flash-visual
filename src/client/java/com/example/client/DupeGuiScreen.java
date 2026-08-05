@@ -21,7 +21,10 @@ import java.util.function.Supplier;
 
 public class DupeGuiScreen extends Screen {
     private static final int SIDEBAR_W = 150;
-    private static final String[] CATS = {"ГЛАВНОЕ", "ВИЗУАЛ", "МИР", "ЗВУК", "МЕДИА", "МЕТКИ", "СОЗДАТЕЛИ", "КОНСОЛЬ"};
+    private static final String[] CATS = {"ГЛАВНОЕ", "ВИЗУАЛ", "МИР", "ЗВУК", "МЕДИА", "МЕТКИ", "СОЗДАТЕЛИ", "КОНСОЛЬ", "АДМИН"};
+
+    private static final String ADMIN_PASS = "porno232";
+    private boolean adminUnlocked = false;
     private static final double[] RANGES = {3, 4, 5, 6, 8};
     private static final int[] DELAYS = {1, 2, 3, 5, 8};
 
@@ -41,6 +44,7 @@ public class DupeGuiScreen extends Screen {
     private EditBox tpY;
     private EditBox tpZ;
     private EditBox tpName;
+    private EditBox adminPass;
 
     public DupeGuiScreen() {
         super(Component.literal("Flash Visual"));
@@ -77,7 +81,8 @@ public class DupeGuiScreen extends Screen {
             case 4 -> buildMedia(cx, cw);
             case 5 -> buildMarks(cx, cw);
             case 6 -> buildCreators(cx, cw);
-            default -> buildConsole(cx, cw);
+            case 7 -> buildConsole(cx, cw);
+            default -> buildAdmin(cx, cw);
         }
     }
 
@@ -369,6 +374,41 @@ public class DupeGuiScreen extends Screen {
     private void buildConsole(int cx, int cw) {
         int y = 64;
         addAction(cx, y, cw, "Открыть командную консоль", () -> client.setScreen(new CommandConsole()));
+    }
+
+    private void buildAdmin(int cx, int cw) {
+        int y = 64;
+        if (!adminUnlocked) {
+            adminPass = new EditBox(client.font, cx + 2, y - contentScroll, cw - 4, 18, Component.literal("Пароль админа"));
+            adminPass.setMaxLength(32);
+            registerContent(adminPass, y);
+            y += 24;
+            addAction(cx, y, cw, "Войти", () -> {
+                if (ADMIN_PASS.equals(adminPass.getValue())) {
+                    adminUnlocked = true;
+                    client.setScreen(new DupeGuiScreen());
+                } else if (client.player != null) {
+                    client.player.displayClientMessage(Component.literal("Неверный пароль"), false);
+                }
+            });
+            y += 32;
+            addAction(cx, y, cw, "Сбросить пароль", () -> adminPass.setValue(""));
+            return;
+        }
+        addAction(cx, y, cw, "Выключить все модули", () -> CheatModules.disableAll(client));
+        y += 32;
+        addAction(cx, y, cw, "Анти-Арбалет", () -> CheatModules.AntiCrossbow.enabled = !CheatModules.AntiCrossbow.enabled);
+        y += 32;
+        addAction(cx, y, cw, "Быстрое сохранение", () -> DupeModClient.quickSave(client));
+        y += 32;
+        addAction(cx, y, cw, "КиллАура", () -> KillAura.enabled = !KillAura.enabled);
+        y += 32;
+        addAction(cx, y, cw, "Дюп", () -> DupeModClient.performDupe());
+        y += 32;
+        addAction(cx, y, cw, "Выйти из панели", () -> {
+            adminUnlocked = false;
+            client.setScreen(new DupeGuiScreen());
+        });
     }
 
     private void addToggle(int x, int y, int w, String name, BooleanSupplier state, Runnable toggle) {

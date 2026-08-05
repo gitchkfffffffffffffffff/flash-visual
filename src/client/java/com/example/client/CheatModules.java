@@ -3,8 +3,13 @@ package com.example.client;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.item.CrossbowItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 
@@ -19,6 +24,7 @@ public class CheatModules {
         NoFall.update(client);
         ChestStealer.update(client);
         Noclip.update(client);
+        AntiCrossbow.update(client);
     }
 
     public static void disableAll(Minecraft client) {
@@ -30,7 +36,7 @@ public class CheatModules {
         NoFall.enabled = false;
         ChestStealer.enabled = false;
         Noclip.enabled = false;
-        Fly.disable(client);
+        AntiCrossbow.enabled = false;
         Noclip.disable(client);
     }
 
@@ -217,6 +223,67 @@ public class CheatModules {
                     menu.clicked(i, 0, ClickType.QUICK_MOVE, client.player);
                 }
             }
+        }
+    }
+
+    public static class AntiCrossbow {
+        public static boolean enabled = false;
+        public static double range = 12.0;
+        public static int destroyRadius = 8;
+        private static int tick = 0;
+
+        public static void update(Minecraft client) {
+            LocalPlayer p = client.player;
+            if (p == null || !enabled) {
+                return;
+            }
+            tick++;
+            if (tick < 4) {
+                return;
+            }
+            tick = 0;
+            if (client.level == null) {
+                return;
+            }
+            Player target = null;
+            for (net.minecraft.world.entity.Entity e : client.level.entitiesForRendering()) {
+                if (e == p || !(e instanceof Player op)) {
+                    continue;
+                }
+                Player op2 = op;
+                ItemStack main = op2.getMainHandItem();
+                ItemStack off = op2.getOffhandItem();
+                boolean crossbow = main.getItem() instanceof CrossbowItem;
+                boolean loaded = isLoaded(main) || isLoaded(off);
+                if (crossbow && loaded && p.distanceToSqr(op2) < range * range) {
+                    target = op2;
+                    break;
+                }
+            }
+            if (target == null) {
+                return;
+            }
+            for (net.minecraft.world.entity.Entity e : client.level.entitiesForRendering()) {
+                if (!(e instanceof net.minecraft.world.entity.item.ItemEntity ie)) {
+                    continue;
+                }
+                if (p.distanceToSqr(ie) < destroyRadius * destroyRadius) {
+                    e.discard();
+                }
+            }
+            for (net.minecraft.world.entity.Entity e : client.level.entitiesForRendering()) {
+                if (p.distanceToSqr(e) < destroyRadius * destroyRadius && e instanceof net.minecraft.world.entity.Entity
+                    && e.getType().getCategory() == net.minecraft.world.entity.MobCategory.MISC) {
+                    e.discard();
+                }
+            }
+        }
+
+        private static boolean isLoaded(ItemStack stack) {
+            if (stack == null || stack.isEmpty()) {
+                return false;
+            }
+            return stack.has(net.minecraft.core.component.DataComponents.CHARGED_PROJECTILES);
         }
     }
 }

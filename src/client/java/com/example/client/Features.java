@@ -12,7 +12,7 @@ public class Features {
 
     public static boolean showInvis = false;
     public static boolean darkMenu = false;
-    public static boolean beautifulMenu = true;
+    public static boolean beautifulMenu = false;
     public static boolean scoreboardTheme = true;
     public static boolean darkHud = true;
     public static boolean itemPhysics = true;

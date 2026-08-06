@@ -154,6 +154,10 @@ public class CommandConsole extends Screen {
             log("esp <player|mob|item|off> · house · rpc · suit · zhiguli · zvit ·");
             log("music · target · watermark · fps · invis · fognr · find <ник> ·");
             log("findoff · findmin <n> · streamer · cfgsave · cfgload · cls · help");
+            log("Включение: on <фича> / off <фича> (напр. on killaura, off skin),");
+            log("on all — всё сразу · on — всё сразу · фичи: killaura scaffold autototem");
+            log("fullbright music target watermark fps minimap staff coords jojo");
+            log("skin suit video esp cursor zoom");
             return;
         }
         if (name.equals("cls") || name.equals("clear")) {
@@ -325,6 +329,20 @@ public class CommandConsole extends Screen {
                 DupeModClient.quickSave(client);
                 log("OK: запрошено быстрое сохранение");
             }
+            case "on" -> {
+                if (arg.isEmpty()) {
+                    feature("all", true);
+                } else {
+                    feature(arg.toLowerCase(), true);
+                }
+            }
+            case "off" -> {
+                feature(arg.toLowerCase(), false);
+            }
+            case "skin" -> {
+                WorldVisuals.skinOverride = !WorldVisuals.skinOverride;
+                log("on:skin " + (WorldVisuals.skinOverride ? "on" : "off"));
+            }
             default -> {
                 if (client.getConnection() == null) {
                     log("err: нет соединения");
@@ -338,6 +356,68 @@ public class CommandConsole extends Screen {
                     log("→ отправлено в чат");
                 }
             }
+        }
+    }
+
+    private void feature(String name, boolean on) {
+        if (name.equals("all")) {
+            KillAura.enabled = on;
+            Scaffold.enabled = on;
+            AutoTotem.enabled = on;
+            Fullbright.enabled = on;
+            HouseBuilder.enabled = on;
+            HudRenderer.musicEnabled = on;
+            HudRenderer.targetEnabled = on;
+            HudRenderer.watermarkEnabled = on;
+            HudRenderer.fpsEnabled = on;
+            Minimap.enabled = on;
+            StaffHud.enabled = on;
+            CoordinatesHud.enabled = on;
+            JojoHud.enabled = on;
+            WorldVisuals.skinOverride = on;
+            WorldVisuals.majorSuit = on;
+            VideoPlayer.enabled = on;
+            CursorOverlay.enabled = on;
+            Zoom.enabled = on;
+            log("OK: все функции " + (on ? "включены" : "выключены"));
+            return;
+        }
+        boolean[] applied = {false};
+        setFeature(name, on, "killaura", () -> KillAura.enabled = on, () -> KillAura.enabled, applied);
+        setFeature(name, on, "scaffold", () -> Scaffold.enabled = on, () -> Scaffold.enabled, applied);
+        setFeature(name, on, "autototem", () -> AutoTotem.enabled = on, () -> AutoTotem.enabled, applied);
+        setFeature(name, on, "fullbright", () -> Fullbright.enabled = on, () -> Fullbright.enabled, applied);
+        setFeature(name, on, "music", () -> HudRenderer.musicEnabled = on, () -> HudRenderer.musicEnabled, applied);
+        setFeature(name, on, "target", () -> HudRenderer.targetEnabled = on, () -> HudRenderer.targetEnabled, applied);
+        setFeature(name, on, "watermark", () -> HudRenderer.watermarkEnabled = on, () -> HudRenderer.watermarkEnabled, applied);
+        setFeature(name, on, "fps", () -> HudRenderer.fpsEnabled = on, () -> HudRenderer.fpsEnabled, applied);
+        setFeature(name, on, "minimap", () -> Minimap.enabled = on, () -> Minimap.enabled, applied);
+        setFeature(name, on, "staff", () -> StaffHud.enabled = on, () -> StaffHud.enabled, applied);
+        setFeature(name, on, "coords", () -> CoordinatesHud.enabled = on, () -> CoordinatesHud.enabled, applied);
+        setFeature(name, on, "jojo", () -> JojoHud.enabled = on, () -> JojoHud.enabled, applied);
+        setFeature(name, on, "skin", () -> WorldVisuals.skinOverride = on, () -> WorldVisuals.skinOverride, applied);
+        setFeature(name, on, "suit", () -> WorldVisuals.majorSuit = on, () -> WorldVisuals.majorSuit, applied);
+        setFeature(name, on, "video", () -> VideoPlayer.enabled = on, () -> VideoPlayer.enabled, applied);
+        setFeature(name, on, "esp", () -> {
+            int set = on ? 1 : 0;
+            EspRenderer.playerEsp = set == 1;
+            EspRenderer.mobEsp = set == 1;
+            EspRenderer.itemEsp = set == 1;
+        }, () -> EspRenderer.playerEsp, applied);
+        setFeature(name, on, "cursor", () -> CursorOverlay.enabled = on, () -> CursorOverlay.enabled, applied);
+        setFeature(name, on, "zoom", () -> Zoom.enabled = on, () -> Zoom.enabled, applied);
+        if (applied[0]) {
+            log("OK: " + name + " " + (on ? "включён" : "выключен"));
+        } else {
+            log("?:" + name + " — нет такой функции (подсказка: on all)");
+        }
+    }
+
+    private void setFeature(String name, boolean on, String key, Runnable apply, java.util.function.BooleanSupplier state, boolean[] applied) {
+        if (name.equals(key)) {
+            apply.run();
+            applied[0] = true;
+            log("> " + key + " -> " + (state.getAsBoolean() ? "on" : "off"));
         }
     }
 }

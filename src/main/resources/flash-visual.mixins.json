@@ -22,7 +22,9 @@
 		"CameraMixin",
 		"GuiHudMixin",
 		"ItemEntityMixin",
-		"GameRendererMixin"
+		"GameRendererMixin",
+		"LoadingOverlayMixin",
+		"LevelLoadingScreenMixin"
 	],
 	"injectors": {
 		"defaultRequire": 0

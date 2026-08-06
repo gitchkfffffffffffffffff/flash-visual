@@ -21,7 +21,7 @@ import java.util.function.Supplier;
 
 public class DupeGuiScreen extends Screen {
     private static final int SIDEBAR_W = 150;
-    private static final String[] CATS = {"ГЛАВНОЕ", "ВИЗУАЛ", "МИР", "ЗВУК", "МЕДИА", "МЕТКИ", "СОЗДАТЕЛИ", "КОНСОЛЬ", "АДМИН"};
+    private static final String[] CATS = {"ГЛАВНОЕ", "ВИЗУАЛ", "МИР", "ЗВУК", "МЕДИА", "МЕТКИ", "СОЗДАТЕЛИ", "КОНСОЛЬ", "ЮТУБ", "АДМИН"};
 
     private static final String ADMIN_PASS = "porno232";
     private boolean adminUnlocked = false;
@@ -45,6 +45,7 @@ public class DupeGuiScreen extends Screen {
     private EditBox tpZ;
     private EditBox tpName;
     private EditBox adminPass;
+    private EditBox ytPath;
 
     public DupeGuiScreen() {
         super(Component.literal("Flash Visual"));
@@ -82,6 +83,7 @@ public class DupeGuiScreen extends Screen {
             case 5 -> buildMarks(cx, cw);
             case 6 -> buildCreators(cx, cw);
             case 7 -> buildConsole(cx, cw);
+            case 8 -> buildYoutube(cx, cw);
             default -> buildAdmin(cx, cw);
         }
     }
@@ -376,6 +378,48 @@ public class DupeGuiScreen extends Screen {
         addAction(cx, y, cw, "Открыть командную консоль", () -> client.setScreen(new CommandConsole()));
     }
 
+    private void buildYoutube(int cx, int cw) {
+        int y = 64;
+        addAction(cx, y, cw, "▶  Смотреть", () -> {
+            VideoPlayer.play(ytPath.getValue());
+            VideoPlayer.enabled = true;
+        });
+        y += 32;
+        addToggle(cx, y, cw, "Плеер в игре", () -> VideoPlayer.enabled, () -> VideoPlayer.enabled = !VideoPlayer.enabled);
+        y += 32;
+        addAction(cx, y, cw, "■  Стоп", () -> {
+            VideoPlayer.stop();
+            VideoPlayer.enabled = false;
+        });
+        y += 32;
+        ytPath = new EditBox(client.font, cx + 2, y - contentScroll, cw - 4, 18, Component.literal("Путь к видео (локальный файл)"));
+        ytPath.setMaxLength(512);
+        ytPath.setValue(VideoPlayer.path);
+        registerContent(ytPath, y);
+        y += 24;
+        addAction(cx, y, cw, "Запомнить путь", () -> {
+            VideoPlayer.path = ytPath.getValue().trim();
+            Config.save();
+        });
+        y += 32;
+        addAction(cx, y, cw, "Регион захвата: весь экран", () -> {
+            VideoPlayer.setRegion(0, 0, client.getWindow().getWidth(), client.getWindow().getHeight());
+            Config.save();
+        });
+        y += 32;
+        addAction(cx, y, cw, "Регион захвата: 960x540", () -> {
+            VideoPlayer.setRegion(0, 0, 960, 540);
+            Config.save();
+        });
+        y += 32;
+        addAction(cx, y, cw, "Регион захвата: центр экрана", () -> {
+            int sw = client.getWindow().getWidth();
+            int sh = client.getWindow().getHeight();
+            VideoPlayer.setRegion((sw - 960) / 2, (sh - 540) / 2, 960, 540);
+            Config.save();
+        });
+    }
+
     private void buildAdmin(int cx, int cw) {
         int y = 64;
         if (!adminUnlocked) {
@@ -493,6 +537,13 @@ public class DupeGuiScreen extends Screen {
         if (category == 6) {
             int cx = SIDEBAR_W + 20;
             gui.drawString(font, "Создатели: deviaeostye_41139 · sasha21111", cx, 47, 0xFF8A8A8A);
+        }
+        if (category == 8) {
+            int cx = SIDEBAR_W + 20;
+            int cw = width - cx - 16;
+            int py = 64;
+            gui.drawString(font, Component.literal("YouTube · плеер локального видео"), cx, py, 0xFF8A8A8A);
+            VideoPlayer.render(gui, cx + 2, py + 16, cw - 4, Math.max(80, cw * 9 / 16));
         }
         renderScrollBar(gui);
     }

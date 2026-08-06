@@ -109,6 +109,13 @@ public class Config {
         put("theme.index", Theme.indexForSave());
         put("theme.anime", Theme.isAnime());
 
+        put("video.path", VideoPlayer.path);
+        put("video.enabled", VideoPlayer.enabled);
+        put("video.captureX", VideoPlayer.captureX);
+        put("video.captureY", VideoPlayer.captureY);
+        put("video.captureW", VideoPlayer.captureW);
+        put("video.captureH", VideoPlayer.captureH);
+
         for (String action : Binds.actions()) {
             put("bind." + action, Binds.get(action));
         }
@@ -252,6 +259,13 @@ public class Config {
         DiscordRpc.showDetails = getBool("discord.showDetails", DiscordRpc.showDetails);
 
         Theme.loadFromSave(getInt("theme.index", Theme.indexForSave()), getBool("theme.anime", Theme.isAnime()));
+
+        VideoPlayer.path = get("video.path", VideoPlayer.path) == null ? VideoPlayer.path : get("video.path", VideoPlayer.path);
+        VideoPlayer.enabled = getBool("video.enabled", VideoPlayer.enabled);
+        VideoPlayer.captureX = getInt("video.captureX", VideoPlayer.captureX);
+        VideoPlayer.captureY = getInt("video.captureY", VideoPlayer.captureY);
+        VideoPlayer.captureW = getInt("video.captureW", VideoPlayer.captureW);
+        VideoPlayer.captureH = getInt("video.captureH", VideoPlayer.captureH);
 
         for (String action : Binds.actions()) {
             int v = getInt("bind." + action, Binds.get(action));

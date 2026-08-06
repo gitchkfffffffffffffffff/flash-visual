@@ -29,13 +29,30 @@ public class SkinChanger {
 			Path path = findSkinFile();
 			if (path != null) {
 				load(Minecraft.getInstance(), path);
+			} else {
+				loadDefaultSkin(Minecraft.getInstance());
 			}
 		}
 		return cached;
 	}
 
+	private static void loadDefaultSkin(Minecraft mc) {
+		InputStream in = SkinChanger.class.getResourceAsStream("/assets/flash-visual/textures/skin.png");
+		if (in != null) {
+			load(mc, in);
+		}
+	}
+
 	private static void load(Minecraft mc, Path path) {
 		try (InputStream in = Files.newInputStream(path)) {
+			load(mc, in);
+		} catch (IOException | RuntimeException e) {
+			LOGGER.warn("Failed to load custom skin from {}", path, e);
+		}
+	}
+
+	private static void load(Minecraft mc, InputStream in) {
+		try {
 			NativeImage image = NativeImage.read(in);
 			DynamicTexture texture = new DynamicTexture(() -> "flash-visual custom skin", image);
 			mc.getTextureManager().register(SKIN_ID, texture);
@@ -43,7 +60,7 @@ public class SkinChanger {
 			PlayerSkin base = DefaultPlayerSkin.getDefaultSkin();
 			cached = PlayerSkin.insecure(body, base.cape(), base.elytra(), base.model());
 		} catch (IOException | RuntimeException e) {
-			LOGGER.warn("Failed to load custom skin from {}", path, e);
+			LOGGER.warn("Failed to load custom skin resource", e);
 		}
 	}
 

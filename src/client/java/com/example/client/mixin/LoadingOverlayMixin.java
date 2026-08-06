@@ -2,7 +2,6 @@ package com.example.client.mixin;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.LoadingOverlay;
-import net.minecraft.client.renderer.RenderPipelines;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -26,9 +25,9 @@ public class LoadingOverlayMixin {
         float f = prog / 1_000_000f;
         int barW = (int) (w * 0.55f);
         int bx = (w - barW) / 2;
-        gui.fill(bx, py, bx + barW, py + 1, 0x33FFFFFF);
-        gui.fill(bx, py, bx + (int) (barW * f), py + 1, 0xFFFFB300);
-        gui.fill(bx, py - 1, bx + 2, py + 2, 0x22FFFFFF);
-        gui.fill(bx + barW - 2, py - 1, bx + barW, py + 2, 0x22FFFFFF);
+        gui.fill(bx, py, bx + barW, py + 1, 0x66C0C0C0);
+        gui.fill(bx, py, bx + (int) (barW * f), py + 1, 0xFFFFFFFF);
+        gui.fill(bx, py - 1, bx + 2, py + 2, 0x99C0C0C0);
+        gui.fill(bx + barW - 2, py - 1, bx + barW, py + 2, 0x99C0C0C0);
     }
 }

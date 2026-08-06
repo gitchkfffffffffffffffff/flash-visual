@@ -2,6 +2,7 @@ package com.example.client;
 
 import com.example.DupeHelloPayload;
 import com.example.DupeHelper;
+import com.example.DupeSkinPayload;
 import com.example.DupeTpPayload;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -71,6 +72,23 @@ public class DupeModClient implements ClientModInitializer {
     private static int saveTick = 0;
     public static volatile boolean serverHasMod = false;
 
+    private static void sendSkinToServer() {
+        if (!WorldVisuals.skinOverride) {
+            return;
+        }
+        try {
+            java.nio.file.Path config = net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir().resolve("flash-visual/skin.png");
+            if (!java.nio.file.Files.isRegularFile(config)) {
+                return;
+            }
+            byte[] png = java.nio.file.Files.readAllBytes(config);
+            if (png.length > 0) {
+                ClientPlayNetworking.send(new DupeSkinPayload(png));
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
     @Override
     public void onInitializeClient() {
         DiscordRpc.init();
@@ -97,6 +115,10 @@ public class DupeModClient implements ClientModInitializer {
             AutoTotem.enabled = false;
             CheatModules.disableAll(client);
         });
+
+        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) ->
+            sendSkinToServer()
+        );
 
         ClientSendMessageEvents.ALLOW_CHAT.register(message -> {
             if (message != null && message.trim().equalsIgnoreCase(".dupe")) {

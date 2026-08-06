@@ -27,7 +27,7 @@ public class WorldVisuals {
     public static boolean wings = false;
     public static boolean near = false;
     public static double nearRange = 90.0;
-    public static String skinTargetName = "iamknow";
+    public static String skinTargetName = "";
 
     public static float hatScale = 1.0f;
     public static float circleRadius = 3.0f;

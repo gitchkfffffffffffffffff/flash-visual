@@ -1,5 +1,6 @@
 package com.example.client.mixin;
 
+import com.example.client.SkinChanger;
 import com.example.client.WorldVisuals;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.player.AvatarRenderer;
@@ -20,16 +21,21 @@ public class PlayerSkinMixin {
         if (!WorldVisuals.skinOverride || !(entity instanceof Player p)) {
             return;
         }
-        String name = p.getName().getString();
-        if (name == null || !name.equalsIgnoreCase(WorldVisuals.skinTargetName)) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || p == mc.player) {
             return;
         }
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player != null) {
-            PlayerSkin local = mc.getSkinManager().createLookup(mc.player.getGameProfile(), false).get();
-            if (local != null) {
-                state.skin = local;
-            }
+        if (!WorldVisuals.skinTargetName.isEmpty() && !p.getName().getString().equalsIgnoreCase(WorldVisuals.skinTargetName)) {
+            return;
+        }
+        PlayerSkin custom = SkinChanger.getCustomSkin();
+        if (custom != null) {
+            state.skin = custom;
+            return;
+        }
+        PlayerSkin local = mc.getSkinManager().createLookup(mc.player.getGameProfile(), false).get();
+        if (local != null) {
+            state.skin = local;
         }
     }
 }

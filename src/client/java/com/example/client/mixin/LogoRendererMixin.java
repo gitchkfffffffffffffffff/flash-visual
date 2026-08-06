@@ -15,7 +15,7 @@ public class LogoRendererMixin {
     @Inject(method = "renderLogo(Lnet/minecraft/client/gui/GuiGraphics;IF)V",
         at = @At("HEAD"), cancellable = true)
     private void flashVisual$hide(GuiGraphics gui, int heightOffset, float alpha, CallbackInfo ci) {
-        if (Features.beautifulMenu && Minecraft.getInstance().screen instanceof TitleScreen) {
+        if (Minecraft.getInstance().screen instanceof TitleScreen) {
             ci.cancel();
         }
     }

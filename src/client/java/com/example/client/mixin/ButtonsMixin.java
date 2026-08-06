@@ -18,7 +18,7 @@ public class ButtonsMixin {
     @Inject(method = "renderWidget(Lnet/minecraft/client/gui/GuiGraphics;IIF)V",
         at = @At("HEAD"), cancellable = true)
     private void flashVisual$render(GuiGraphics gui, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
-        if (!Features.beautifulMenu) {
+        if (!Features.beautifulMenu && !(Minecraft.getInstance().screen instanceof TitleScreen)) {
             return;
         }
         ci.cancel();

@@ -25,9 +25,6 @@ public abstract class TitleScreenMixin {
 
     @Inject(method = "init", at = @At("TAIL"))
     private void flashVisual$layout(CallbackInfo ci) {
-        if (!Features.beautifulMenu) {
-            return;
-        }
         net.minecraft.client.gui.screens.Screen self = (net.minecraft.client.gui.screens.Screen) (Object) this;
         java.util.List<net.minecraft.client.gui.components.AbstractWidget> list = new java.util.ArrayList<>();
         for (Object o : self.children()) {
@@ -49,9 +46,6 @@ public abstract class TitleScreenMixin {
     @Inject(method = "renderBackground(Lnet/minecraft/client/gui/GuiGraphics;IIF)V",
         at = @At("HEAD"), cancellable = true)
     private void flashVisual$bg(GuiGraphics gui, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
-        if (!Features.beautifulMenu) {
-            return;
-        }
         ci.cancel();
         int w = gui.guiWidth();
         int h = gui.guiHeight();
@@ -72,9 +66,6 @@ public abstract class TitleScreenMixin {
 
     @Inject(method = "render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V", at = @At("RETURN"))
     private void flashVisual$overlay(GuiGraphics gui, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
-        if (!Features.beautifulMenu) {
-            return;
-        }
         int w = gui.guiWidth();
         int h = gui.guiHeight();
         long t = System.currentTimeMillis();

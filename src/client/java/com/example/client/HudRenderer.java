@@ -374,7 +374,8 @@ public class HudRenderer {
             Ui.roundRect(gui, x, y, 2, panelH, 1, Ui.PULSE_ACCENT);
         }
 
-        drawCover(gui, covX, covY, cov, playing, smtcAlive ? SmtcReader.appId() : null);
+        drawCover(gui, covX, covY, cov, playing, smtcAlive ? SmtcReader.appId() : null,
+            title != null && !title.isEmpty() && !"Музыка не играет".equals(title));
 
         int textY = y + 7;
         if (textMax > 8 && font.width(title) > textMax) {
@@ -411,7 +412,7 @@ public class HudRenderer {
         return m + ":" + (s < 10 ? "0" : "") + s;
     }
 
-    private static void drawCover(GuiGraphics gui, int x, int y, int size, boolean playing, String appId) {
+    private static void drawCover(GuiGraphics gui, int x, int y, int size, boolean playing, String appId, boolean hasTrack) {
         if (playing) {
             gui.fillGradient(x, y, x + size, y + size, 0xFF2A2A2A, 0xFF080808);
         } else {
@@ -420,7 +421,7 @@ public class HudRenderer {
         gui.renderOutline(x, y, size, size, playing ? 0xFF9A9A9A : 0xFF3A3A3A);
         Font font = Minecraft.getInstance().font;
         int cy = y + size / 2 - 4;
-        if (playing) {
+        if (playing || hasTrack) {
             String app = (appId != null && !appId.isEmpty()) ? appId : WinMusicReader.lastApp();
             IconSpec spec = appSpec(app);
             int pad = 4;

@@ -1,5 +1,6 @@
 package com.example.client.mixin;
 
+import com.example.client.Ui;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.LevelLoadingScreen;
 import org.spongepowered.asm.mixin.Mixin;
@@ -19,18 +20,18 @@ public class LevelLoadingScreenMixin {
         int h = gui.guiHeight();
         // светлый серо-белый фон
         gui.fillGradient(0, 0, w, h, 0xD8E0E0E0, 0xD8F2F2F2);
-        // приятная полоса загрузки
-        int pw = Math.min(420, w - 60);
+        // скруглённая панель с полосой загрузки
+        int pw = Math.min(420, w - 80);
         int px = (w - pw) / 2;
-        int py = h - 24;
+        int py = h - 32;
+        Ui.roundRect(gui, px - 10, py - 12, pw + 20, 40, 12, 0xEFFFFFFF);
         float f = Math.max(0f, Math.min(1f, smoothedProgress));
-        gui.fill(px, py, px + pw, py + 2, 0x66A0A0A0);
-        gui.fill(px, py, px + (int) (pw * f), py + 2, 0xFF000000);
-        gui.fill(px - 2, py - 2, px, py + 4, 0x66A0A0A0);
-        gui.fill(px + pw, py - 2, px + pw + 2, py + 4, 0x66A0A0A0);
+        Ui.roundRect(gui, px, py, pw, 5, 3, 0x66A0A0A0);
+        int fill = (int) (Math.max(1, (pw - 2) * f));
+        Ui.roundRect(gui, px, py, Math.max(2, fill), 5, 3, 0xFF3A3A3A);
         net.minecraft.client.gui.Font font = net.minecraft.client.Minecraft.getInstance().font;
         if (font != null) {
-            gui.drawCenteredString(font, "Загрузка мира", px + pw / 2, py + 6, 0xFF4A4A4A);
+            gui.drawCenteredString(font, "Загрузка мира", px + pw / 2, py - 12, 0xFF4A4A4A);
         }
     }
 }

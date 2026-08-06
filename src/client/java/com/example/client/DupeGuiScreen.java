@@ -560,7 +560,7 @@ public class DupeGuiScreen extends Screen {
         int thumbH = Math.max(20, trackH * usable / contentMax);
         int thumbY = trackTop + (trackH - thumbH) * contentScroll / maxScroll;
         gui.fill(trackX, trackTop, trackX + 2, trackTop + trackH, 0x22FFFFFF);
-        gui.fill(trackX, thumbY, trackX + 2, thumbY + thumbH, 0xFF9A9A9A);
+        Ui.roundRect(gui, trackX, thumbY, 2, thumbH, 1, 0xFF9A9A9A);
     }
 
     @Override
